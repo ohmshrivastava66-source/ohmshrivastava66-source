@@ -83,6 +83,19 @@ export interface PlayerState {
   discardPile: Card[];
   statusEffects: StatusEffect[];
   relics: string[];
+  hiddenCards?: string[];
+  costModifiers?: Record<string, number>;
+}
+
+export interface BossModifier {
+  id: string;
+  name: string;
+  type: 'hide_card' | 'increase_cost' | 'disable_optional' | 'extra_step' | 'lock_card';
+  targetCardId?: string;
+  targetOperation?: string;
+  costIncrease?: number;
+  description: string;
+  durationTurns?: number;
 }
 
 export interface EnemyIntent {

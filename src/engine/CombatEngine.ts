@@ -1,4 +1,4 @@
-import { PlayerState, EnemyState, BattleActionLog, Card } from '../types/game';
+import { PlayerState, EnemyState, BattleActionLog, Card, BossModifier } from '../types/game';
 import { EncounterDefinition } from '../types/curriculum';
 import { telemetry } from './Telemetry';
 import { DiagnosticEngine } from '../ai/DiagnosticEngine';
@@ -8,6 +8,7 @@ import { dangerEngine } from './DangerEngine';
 import { StorageManager } from '../persistence/StorageManager';
 import { questionSelectionEngine } from './QuestionSelectionEngine';
 import { QuestionVariant } from '../curriculum/questionPools';
+import { solutionPathEngine, SolutionGraph } from './SolutionPathEngine';
 
 export interface CombatEngineState {
   player: PlayerState;
@@ -26,15 +27,22 @@ export interface CombatEngineState {
   echoVaultId?: string;
   activeDanger?: DangerEventDefinition;
   lastCardPlayed?: Card;
+  hiddenCards?: string[];
+  costModifiers?: Record<string, number>;
 }
 
 export class CombatEngine {
   private state: CombatEngineState;
   private encounter: EncounterDefinition;
+  private solutionGraph: SolutionGraph;
+  private activePathId: string;
 
   constructor(encounter: EncounterDefinition, activeDanger?: DangerEventDefinition) {
     this.encounter = encounter;
     telemetry.reset();
+
+    // 1. Generate & Lock Solution Graph
+    this.solutionGraph = solutionPathEngine.generateSolutionGraph(encounter);
 
     const initialCards = [...encounter.validCards];
     // Ensure the expected first operation card is present in opening hand
@@ -88,6 +96,8 @@ export class CombatEngine {
         discardPile: [],
         statusEffects: [],
         relics: ['Focus Rune'],
+        hiddenCards: [],
+        costModifiers: {},
       },
       enemy: {
         id: encounter.enemy.name.toLowerCase().replace(/\s+/g, '_'),
@@ -120,11 +130,25 @@ export class CombatEngine {
       showAdaptationModal: false,
       echoVaultAvailable: false,
       activeDanger,
+      hiddenCards: [],
+      costModifiers: {},
     };
+    this.activePathId = this.solutionGraph.primaryPath.id;
+
+    // 2. Guarantee Starting Hand Solvability
+    this.state = solutionPathEngine.ensureStartingHandSolvability(this.solutionGraph, this.state);
   }
 
   public getState(): CombatEngineState {
     return { ...this.state };
+  }
+
+  public getSolutionGraph(): SolutionGraph {
+    return this.solutionGraph;
+  }
+
+  public getEncounter(): EncounterDefinition {
+    return this.encounter;
   }
 
   public playCard(cardId: string): CombatEngineState {
@@ -135,8 +159,17 @@ export class CombatEngine {
     if (cardIndex === -1) return this.state;
     const card = this.state.player.hand[cardIndex];
 
-    // Compute effective energy cost (including enemy adaptations or danger effects)
-    let effectiveCost = card.cost;
+    // Check if card is hidden by boss interference
+    const hiddenCards = this.state.hiddenCards || this.state.player.hiddenCards || [];
+    if (hiddenCards.includes(card.id) || hiddenCards.includes(card.operationKey)) {
+      this.addLog('system', `${card.name} is shrouded in dark mist and cannot be played!`, 'error');
+      return this.state;
+    }
+
+    // Compute effective energy cost (including boss costModifiers, enemy adaptations, or danger effects)
+    const costMods = this.state.costModifiers || this.state.player.costModifiers || {};
+    let effectiveCost = card.cost + (costMods[card.id] || costMods[card.operationKey] || 0);
+
     if (
       this.state.enemy.adaptedModifier?.penaltyCost &&
       this.state.enemy.adaptedModifier.trappedOperation === card.operationKey
@@ -156,9 +189,17 @@ export class CombatEngine {
     this.state.player.currentEnergy -= effectiveCost;
     sounds.playCardCast();
 
-    // Check if played card matches expected optimal step
-    const expectedOp = this.encounter.optimalSequence[this.state.currentStepIndex];
-    const isCorrect = card.operationKey === expectedOp;
+    // Evaluate transition using SolutionPathEngine across primary and alternative routes
+    const transition = solutionPathEngine.evaluateCardTransition(
+      this.solutionGraph,
+      this.state.currentEquationState,
+      this.state.currentStepIndex,
+      card.operationKey,
+      this.activePathId
+    );
+
+    const isCorrect = !!transition?.isValid;
+    const expectedOp = this.encounter.optimalSequence[this.state.currentStepIndex] || card.operationKey;
 
     // Record Telemetry
     const actionItem = telemetry.recordAction(
@@ -191,9 +232,10 @@ export class CombatEngine {
       // In-memory safety
     }
 
-    if (isCorrect) {
-      // SUCCESSFUL STEP RESOLUTION
-      const stepTrans = this.encounter.stepTransformations[this.state.currentStepIndex];
+    if (isCorrect && transition) {
+      // SUCCESSFUL STEP RESOLUTION (Primary or Legitimate Alternative Path)
+      this.activePathId = transition.pathId;
+      const stepTrans = transition.transformation;
       const damage = Math.max(card.damage, stepTrans?.damageValue || 30);
       const shieldGained = card.shield || 10;
 
@@ -202,18 +244,18 @@ export class CombatEngine {
       this.state.player.shield += shieldGained;
 
       // Update problem equation state
-      if (stepTrans) {
-        this.state.currentEquationState = stepTrans.resultingState;
-      }
+      this.state.currentEquationState = transition.nextState;
 
-      this.addLog('player', `Played ${card.name}: ${stepTrans?.explanation || card.effectText}`, 'card', damage);
+      const altTag = transition.isAlternative ? ' [Alternative Proof]' : '';
+      this.addLog('player', `Played ${card.name}: ${stepTrans?.explanation || card.effectText}${altTag}`, 'card', damage);
 
       // Advance step index
       this.state.currentStepIndex += 1;
 
-      // Check if all steps complete or enemy destroyed
+      // Check if all steps complete on current active path or enemy destroyed
+      const currentActivePath = this.solutionGraph.allPaths.find(p => p.id === this.activePathId) || this.solutionGraph.primaryPath;
       if (
-        this.state.currentStepIndex >= this.encounter.optimalSequence.length ||
+        this.state.currentStepIndex >= currentActivePath.operations.length ||
         this.state.enemy.currentHp <= 0
       ) {
         this.state.enemy.currentHp = 0;
@@ -238,6 +280,18 @@ export class CombatEngine {
       this.state.activeDiagnosis = diagnosis;
       this.state.showAdaptationModal = true;
       sounds.playAdaptationAlert();
+
+      // Invoke SolutionPathEngine Branching Recovery (Target Answer REMAINS INVARIANT)
+      const recovery = solutionPathEngine.handleMistakeRecovery(
+        this.solutionGraph,
+        this.state,
+        card.operationKey
+      );
+
+      if (recovery.recoveryAvailable && recovery.nextPathId) {
+        this.activePathId = recovery.nextPathId;
+        this.addLog('system', `Tactical route shifted: ${recovery.explanation}`, 'adapt');
+      }
 
       // Mutate Enemy with Adaptive Counter-Shield
       this.state.enemy.adaptedModifier = diagnosis.adaptation;
@@ -265,7 +319,22 @@ export class CombatEngine {
       }
     }
 
+    // In-combat Solvability Guarantee Harness:
+    // Ensure state remains solvable from the current hand/draw state!
+    solutionPathEngine.repairUnsolvableState(this.solutionGraph, this.state);
+
     return this.state;
+  }
+
+  public applyBossModifier(modifier: BossModifier): { applied: boolean; replacement?: BossModifier } {
+    const result = solutionPathEngine.applySafeBossModifier(this.solutionGraph, this.state, modifier);
+    this.state = result.state;
+    if (result.replacement) {
+      this.addLog('enemy', `${this.state.enemy.name} modified tactics: ${result.replacement.description}`, 'adapt');
+    } else {
+      this.addLog('enemy', `${this.state.enemy.name} invoked: ${modifier.description}`, 'adapt');
+    }
+    return { applied: result.applied, replacement: result.replacement };
   }
 
   public endTurn(): CombatEngineState {
@@ -300,6 +369,22 @@ export class CombatEngine {
       if (drawn) this.state.player.hand.push(drawn);
     }
 
+    // If boss battle, boss may attempt safe interference
+    if (this.encounter.isBoss && this.state.turnNumber % 2 === 0 && this.state.player.hand.length > 0) {
+      const candidate = this.state.player.hand[this.state.player.hand.length - 1];
+      const bossMod: BossModifier = {
+        id: `boss_turn_${this.state.turnNumber}_mod`,
+        name: 'Shadow Shroud',
+        type: 'hide_card',
+        targetCardId: candidate.id,
+        description: `Shrouded ${candidate.name} in mist.`,
+      };
+      this.applyBossModifier(bossMod);
+    }
+
+    // Guarantee that the new turn state is 100% solvable
+    solutionPathEngine.repairUnsolvableState(this.solutionGraph, this.state);
+
     this.state.combatStatus = 'PLAYER_TURN';
     return this.state;
   }
@@ -313,14 +398,11 @@ export class CombatEngine {
     this.encounter = nextEncounter;
     const fresh = new CombatEngine(this.encounter, this.state.activeDanger);
     this.state = fresh.state;
+    this.solutionGraph = fresh.solutionGraph;
     return this.state;
   }
 
   public advanceToQuestion(question: QuestionVariant): CombatEngineState {
-    this.state.currentEquationState = question.initialEquationOrState;
-    this.state.currentObjective = question.objective;
-    this.state.currentStepIndex = 0;
-    this.state.challengeIndex = (this.state.challengeIndex || 0) + 1;
     this.encounter.optimalSequence = [...question.optimalSequence];
     this.encounter.stepTransformations = question.stepTransformations.map(st => ({ ...st }));
     this.encounter.misconceptions = [...question.misconceptions];
@@ -328,6 +410,27 @@ export class CombatEngine {
     this.encounter.targetState = question.targetState;
     this.encounter.objective = question.objective;
     this.encounter.problemStatement = question.problemStatement;
+    if (question.correctAnswer) {
+      this.encounter.correctAnswer = question.correctAnswer;
+    }
+    if (question.alternativePaths) {
+      this.encounter.alternativePaths = question.alternativePaths;
+    }
+    if (question.recoveryPaths) {
+      this.encounter.recoveryPaths = question.recoveryPaths;
+    }
+
+    this.solutionGraph = solutionPathEngine.generateSolutionGraph(this.encounter);
+
+    this.state.currentEquationState = question.initialEquationOrState;
+    this.state.currentObjective = question.objective;
+    this.state.currentStepIndex = 0;
+    this.state.challengeIndex = (this.state.challengeIndex || 0) + 1;
+    this.activePathId = this.solutionGraph.primaryPath.id;
+    this.state.hiddenCards = [];
+    this.state.costModifiers = {};
+
+    this.state = solutionPathEngine.ensureStartingHandSolvability(this.solutionGraph, this.state);
     this.addLog('system', `Next challenge presented: ${question.objective}`, 'card');
     return this.state;
   }

@@ -46,6 +46,12 @@ export class QuestionSelectionEngine {
       return pool[0];
     }
 
+    // Pure Seeded Determinism: identical seed always yields the exact same question variant
+    if (options.seed !== undefined) {
+      const idx = Math.abs(options.seed) % pool.length;
+      return pool[idx];
+    }
+
     const seen = this.seenHistory.get(poolKey) || [];
     const lastId = this.lastSelectedId.get(poolKey) || options.excludeId;
 
@@ -59,15 +65,8 @@ export class QuestionSelectionEngine {
       this.seenHistory.set(poolKey, lastId ? [lastId] : []);
     }
 
-    // Deterministic selection if seed provided, otherwise pick next/random
-    let selected: QuestionVariant;
-    if (options.seed !== undefined) {
-      const idx = Math.abs(options.seed) % candidates.length;
-      selected = candidates[idx];
-    } else {
-      // Choose the first available candidate in current cycle to guarantee predictable cycling
-      selected = candidates[0];
-    }
+    // Choose the first available candidate in current cycle to guarantee predictable cycling
+    const selected = candidates[0];
 
     // Record seen
     this.recordQuestionSeen(subject, levelNumber, selected.id);
@@ -119,17 +118,22 @@ export class QuestionSelectionEngine {
       reorderedCards.unshift(neededCard);
     }
 
-    return {
+    const merged: EncounterDefinition = {
       ...baseEncounter,
       objective: selected.objective,
       problemStatement: selected.problemStatement,
       initialEquationOrState: selected.initialEquationOrState,
       targetState: selected.targetState,
+      correctAnswer: selected.correctAnswer,
       optimalSequence: [...selected.optimalSequence],
       stepTransformations: selected.stepTransformations.map(st => ({ ...st })),
       misconceptions: [...selected.misconceptions],
+      alternativePaths: selected.alternativePaths ? selected.alternativePaths.map(p => ({ ...p })) : undefined,
+      recoveryPaths: selected.recoveryPaths ? selected.recoveryPaths.map(r => ({ ...r })) : undefined,
       validCards: reorderedCards,
     };
+
+    return merged;
   }
 }
 

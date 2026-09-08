@@ -65,6 +65,28 @@ export interface EncounterDefinition {
     cardId?: string;
   };
   trialOrder?: number;
+  correctAnswer?: string;
+  alternativePaths?: SolutionPathDefinition[];
+  recoveryPaths?: RecoveryPathDefinition[];
+}
+
+export interface SolutionPathDefinition {
+  id: string;
+  name: string;
+  operations: string[];
+  educationalMethod: string;
+  difficulty?: number;
+  completionCondition?: string;
+  transformations: StepTransformation[];
+}
+
+export interface RecoveryPathDefinition {
+  failedStepIndex: number;
+  triggerOperation: string;
+  recoveryOperation: string;
+  resultingState: string;
+  remainingSequence: string[];
+  explanation: string;
 }
 
 export interface EchoDungeonStep {

@@ -311,18 +311,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         {/* Hand of Cards Carousel */}
         <div className="w-full overflow-x-auto pb-2 flex items-center justify-center gap-3">
           {gameState.player.hand.map(card => {
+            const hiddenCards = gameState.hiddenCards || gameState.player.hiddenCards || [];
+            const isHidden = hiddenCards.includes(card.id) || hiddenCards.includes(card.operationKey);
+            const costMods = gameState.costModifiers || gameState.player.costModifiers || {};
+            const modCost = costMods[card.id] || costMods[card.operationKey] || 0;
             const hasPenalty =
               gameState.enemy.adaptedModifier?.trappedOperation === card.operationKey;
+            const totalCostMod = (hasPenalty ? 1 : 0) + modCost;
             return (
               <CardComponent
                 key={card.id}
                 card={card}
                 onClick={handlePlayCard}
+                isHidden={isHidden}
                 disabled={
                   gameState.combatStatus !== 'PLAYER_TURN' ||
-                  gameState.player.currentEnergy < card.cost + (hasPenalty ? 1 : 0)
+                  gameState.player.currentEnergy < card.cost + totalCostMod ||
+                  isHidden
                 }
-                costModifier={hasPenalty ? 1 : 0}
+                costModifier={totalCostMod}
               />
             );
           })}

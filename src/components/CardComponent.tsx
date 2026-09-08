@@ -10,6 +10,7 @@ interface CardComponentProps {
   costModifier?: number;
   highlight?: boolean;
   compact?: boolean;
+  isHidden?: boolean;
 }
 
 export const CardComponent: React.FC<CardComponentProps> = ({
@@ -19,6 +20,7 @@ export const CardComponent: React.FC<CardComponentProps> = ({
   costModifier = 0,
   highlight = false,
   compact = false,
+  isHidden = false,
 }) => {
   const effectiveCost = Math.max(0, card.cost + costModifier);
 
@@ -64,8 +66,32 @@ export const CardComponent: React.FC<CardComponentProps> = ({
   };
 
   const handleClick = () => {
-    if (!disabled) onClick(card);
+    if (!disabled && !isHidden) onClick(card);
   };
+
+  if (isHidden) {
+    return (
+      <div
+        className={`relative select-none cursor-not-allowed rounded-xl border-2 border-purple-900/60 bg-gradient-to-b from-[#0e0717]/95 via-[#08030f]/95 to-[#05010a]/95 flex flex-col items-center justify-center p-3 text-center opacity-75 shadow-[0_0_20px_rgba(88,28,135,0.4)] ${
+          compact ? 'w-32 h-44' : 'w-44 sm:w-48 h-64 sm:h-68'
+        }`}
+        title="Shrouded in dark mist by boss interference"
+      >
+        <div className="w-12 h-12 rounded-full bg-purple-950/80 border border-purple-700/50 flex items-center justify-center text-purple-400 mb-2 animate-pulse">
+          <LucideIcons.Lock className="w-6 h-6 text-purple-300" />
+        </div>
+        <h4 className="font-cinzel font-bold text-slate-300 text-sm tracking-wide">
+          Shrouded Ward
+        </h4>
+        <span className="text-[10px] font-mono-code text-purple-400/80 uppercase tracking-widest mt-1">
+          [SHROUDED]
+        </span>
+        <p className="text-[10px] text-slate-500 mt-2 italic px-1">
+          Veiled by the Archon's ancient wards.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -1,5 +1,5 @@
 import { SubjectId } from '../types/game';
-import { StepTransformation, MisconceptionRule } from '../types/curriculum';
+import { StepTransformation, MisconceptionRule, SolutionPathDefinition, RecoveryPathDefinition } from '../types/curriculum';
 
 export interface QuestionVariant {
   id: string;
@@ -11,9 +11,12 @@ export interface QuestionVariant {
   problemStatement: string;
   initialEquationOrState: string;
   targetState: string;
+  correctAnswer?: string;
   optimalSequence: string[];
   stepTransformations: StepTransformation[];
   misconceptions: MisconceptionRule[];
+  alternativePaths?: SolutionPathDefinition[];
+  recoveryPaths?: RecoveryPathDefinition[];
 }
 
 export const QUESTION_POOLS: Record<string, QuestionVariant[]> = {
@@ -205,6 +208,7 @@ export const QUESTION_POOLS: Record<string, QuestionVariant[]> = {
       problemStatement: 'Neutralize the dual wards: 2x + y = 7 and x - y = 2',
       initialEquationOrState: '{ 2x + y = 7, x - y = 2 }',
       targetState: 'x = 3, y = 1 [VERIFIED]',
+      correctAnswer: 'x = 3, y = 1',
       optimalSequence: ['SIMPLIFY', 'SOLVE', 'VERIFY'],
       stepTransformations: [
         {
@@ -227,6 +231,49 @@ export const QUESTION_POOLS: Record<string, QuestionVariant[]> = {
           resultingState: '2(3) + 1 = 7 [TRUE]',
           explanation: 'Both conditions satisfied simultaneously.',
           damageValue: 30,
+        },
+      ],
+      alternativePaths: [
+        {
+          id: 'path_substitution',
+          name: 'Method B: Substitution',
+          operations: ['SUBSTITUTE', 'SOLVE', 'VERIFY'],
+          educationalMethod: 'Algebraic Substitution',
+          difficulty: 2,
+          completionCondition: 'x = 3, y = 1 [VERIFIED]',
+          transformations: [
+            {
+              stepIndex: 0,
+              operationKey: 'SUBSTITUTE',
+              resultingState: 'x - (7 - 2x) = 2 => 3x - 7 = 2 => 3x = 9',
+              explanation: 'Isolated y = 7 - 2x from eq 1 and substituted into eq 2.',
+              damageValue: 40,
+            },
+            {
+              stepIndex: 1,
+              operationKey: 'SOLVE',
+              resultingState: '3x = 9 => x = 3, y = 7 - 2(3) = 1',
+              explanation: 'Solved linear equation for x and computed y.',
+              damageValue: 50,
+            },
+            {
+              stepIndex: 2,
+              operationKey: 'VERIFY',
+              resultingState: '2(3) + 1 = 7 and 3 - 1 = 2 [TRUE]',
+              explanation: 'Both equations verified under substitution.',
+              damageValue: 30,
+            },
+          ],
+        },
+      ],
+      recoveryPaths: [
+        {
+          failedStepIndex: 0,
+          triggerOperation: 'EXPAND',
+          recoveryOperation: 'SIMPLIFY',
+          resultingState: '3x = 9 => x = 3',
+          remainingSequence: ['SOLVE', 'VERIFY'],
+          explanation: 'Recovered from premature expansion. Eliminated y via addition.',
         },
       ],
       misconceptions: [
