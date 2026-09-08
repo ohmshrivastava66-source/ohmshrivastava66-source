@@ -57,6 +57,9 @@ const DEFAULT_PROFILE: PlayerProfile = {
   masteryCompressionRecords: {},
   unlockedCardIds: ['math_factor', 'math_solve', 'math_verify', 'math_expand', 'math_substitute', 'math_simplify'],
   relics: ['Focus Rune', 'Time Shard'],
+  equippedRelics: ['Focus Rune', 'Time Shard'],
+  discoveredRelics: ['Focus Rune', 'Time Shard'],
+  prestigeTitles: [],
   strengths: ['Pattern Recognition', 'Structural Decomposition'],
   weaknesses: [],
   runHistory: [],
@@ -90,6 +93,28 @@ export class StorageManager {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
           const parsed = JSON.parse(data);
+          const discoveredRelics: string[] = parsed.discoveredRelics && Array.isArray(parsed.discoveredRelics)
+            ? [...parsed.discoveredRelics]
+            : (parsed.relics ? [...parsed.relics] : ['Focus Rune', 'Time Shard']);
+
+          if (parsed.relics && Array.isArray(parsed.relics)) {
+            parsed.relics.forEach((r: string) => {
+              if (!discoveredRelics.includes(r)) discoveredRelics.push(r);
+            });
+          }
+
+          const equippedRelics: string[] = parsed.equippedRelics && Array.isArray(parsed.equippedRelics)
+            ? [...parsed.equippedRelics]
+            : (parsed.relics ? parsed.relics.slice(0, 2) : ['Focus Rune', 'Time Shard']);
+
+          const prestigeTitles: string[] = parsed.prestigeTitles && Array.isArray(parsed.prestigeTitles)
+            ? [...parsed.prestigeTitles]
+            : [];
+
+          if (parsed.title && !prestigeTitles.includes(parsed.title) && parsed.title !== DEFAULT_PROFILE.title) {
+            prestigeTitles.push(parsed.title);
+          }
+
           return {
             ...DEFAULT_PROFILE,
             ...parsed,
@@ -98,6 +123,10 @@ export class StorageManager {
             clearedHiddenTrials: { ...DEFAULT_PROFILE.clearedHiddenTrials, ...parsed.clearedHiddenTrials },
             masteryCompressionRecords: { ...DEFAULT_PROFILE.masteryCompressionRecords, ...parsed.masteryCompressionRecords },
             conceptPerformance: { ...DEFAULT_PROFILE.conceptPerformance, ...parsed.conceptPerformance },
+            relics: parsed.relics ? [...parsed.relics] : ['Focus Rune', 'Time Shard'],
+            equippedRelics,
+            discoveredRelics,
+            prestigeTitles,
             dangerCooldownBattles: parsed.dangerCooldownBattles ?? 0,
             surpriseAttackCooldownBattles: parsed.surpriseAttackCooldownBattles ?? 0,
             surpriseAttacksCompleted: parsed.surpriseAttacksCompleted ?? 0,
@@ -359,11 +388,21 @@ export class StorageManager {
       const currentMastery = profile.subjectMastery[subject] || 0;
       profile.subjectMastery[subject] = Math.min(100, currentMastery + masteryReward);
 
-      if (title && !profile.title.includes(title)) {
-        profile.title = `${title} of the Spire`;
+      if (title) {
+        if (!profile.title.includes(title)) {
+          profile.title = `${title} of the Spire`;
+        }
+        if (!profile.prestigeTitles) profile.prestigeTitles = [];
+        if (!profile.prestigeTitles.includes(title)) profile.prestigeTitles.push(title);
       }
-      if (relic && !profile.relics.includes(relic)) {
-        profile.relics.push(relic);
+      if (relic) {
+        if (!profile.relics.includes(relic)) {
+          profile.relics.push(relic);
+        }
+        if (!profile.discoveredRelics) profile.discoveredRelics = [...profile.relics];
+        if (!profile.discoveredRelics.includes(relic)) {
+          profile.discoveredRelics.push(relic);
+        }
       }
       if (!profile.strengths.includes(`Ambush Conqueror: ${subject}`)) {
         profile.strengths.push(`Ambush Conqueror: ${subject}`);
@@ -404,9 +443,17 @@ export class StorageManager {
         profile.xpToNextLevel = Math.round(profile.xpToNextLevel * 1.4);
       }
       profile.title = 'Apex of the Spire';
+      if (!profile.prestigeTitles) profile.prestigeTitles = [];
+      if (!profile.prestigeTitles.includes('Apex of the Spire')) {
+        profile.prestigeTitles.push('Apex of the Spire');
+      }
       const relicName = 'Prism of the Council';
       if (!profile.relics.includes(relicName)) {
         profile.relics.push(relicName);
+      }
+      if (!profile.discoveredRelics) profile.discoveredRelics = [...profile.relics];
+      if (!profile.discoveredRelics.includes(relicName)) {
+        profile.discoveredRelics.push(relicName);
       }
       if (!profile.strengths.includes('Conqueror of the Council')) {
         profile.strengths.push('Conqueror of the Council');
@@ -502,11 +549,21 @@ export class StorageManager {
         mirrorState.defeatedMirrors.push(mirrorId);
       }
       profile.xp += rewardXp;
-      if (mirrorMark && !profile.relics.includes(mirrorMark)) {
-        profile.relics.push(mirrorMark);
+      if (mirrorMark) {
+        if (!profile.relics.includes(mirrorMark)) {
+          profile.relics.push(mirrorMark);
+        }
+        if (!profile.discoveredRelics) profile.discoveredRelics = [...profile.relics];
+        if (!profile.discoveredRelics.includes(mirrorMark)) {
+          profile.discoveredRelics.push(mirrorMark);
+        }
       }
       if (profile.title !== 'Apex of the Spire') {
         profile.title = 'Reflective Sovereign';
+      }
+      if (!profile.prestigeTitles) profile.prestigeTitles = [];
+      if (!profile.prestigeTitles.includes('Reflective Sovereign')) {
+        profile.prestigeTitles.push('Reflective Sovereign');
       }
     }
 

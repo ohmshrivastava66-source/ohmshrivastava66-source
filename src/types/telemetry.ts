@@ -129,6 +129,9 @@ export interface PlayerProfile {
   observerState?: ObserverState;
   mirrorBossState?: MirrorBossState;
   lastQuestionResult?: LastQuestionResult;
+  discoveredRelics?: string[];
+  equippedRelics?: string[];
+  prestigeTitles?: string[];
 }
 
 export interface SurpriseAttackTelemetryRecord {

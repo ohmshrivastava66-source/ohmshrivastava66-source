@@ -402,10 +402,18 @@ export class MasteryCompressionEngine {
     // 5. Prestige Rewards
     if (encounter.prestigeRewards?.title) {
       updated.title = encounter.prestigeRewards.title;
+      if (!updated.prestigeTitles) updated.prestigeTitles = [];
+      if (!updated.prestigeTitles.includes(encounter.prestigeRewards.title)) {
+        updated.prestigeTitles.push(encounter.prestigeRewards.title);
+      }
     }
     if (encounter.prestigeRewards?.relic) {
       if (!updated.relics.includes(encounter.prestigeRewards.relic)) {
         updated.relics = [...updated.relics, encounter.prestigeRewards.relic];
+      }
+      if (!updated.discoveredRelics) updated.discoveredRelics = [...updated.relics];
+      if (!updated.discoveredRelics.includes(encounter.prestigeRewards.relic)) {
+        updated.discoveredRelics.push(encounter.prestigeRewards.relic);
       }
     }
     if (encounter.prestigeRewards?.cardId) {
