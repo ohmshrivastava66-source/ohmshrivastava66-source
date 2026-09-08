@@ -5,7 +5,19 @@ import { PlayerProfile } from '../types/telemetry';
 import { ParticleCanvas } from '../components/ParticleCanvas';
 import { StorageManager } from '../persistence/StorageManager';
 import { MasteryCompressionEngine } from '../engine/MasteryCompressionEngine';
-import { Crown, Swords, CheckCircle2, Lock, BookOpen, ArrowLeft, Sparkles, Layers, ShieldCheck } from 'lucide-react';
+import {
+  Crown,
+  Swords,
+  CheckCircle2,
+  Lock,
+  BookOpen,
+  ArrowLeft,
+  Sparkles,
+  Layers,
+  ShieldCheck,
+  Star,
+  Award,
+} from 'lucide-react';
 import { sounds } from '../audio/SoundEffects';
 
 interface WorldMapScreenProps {
@@ -31,6 +43,10 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
   const mainLevels = subjectInfo.levels.filter(lvl => lvl.pathType !== 'hidden_trial');
   const hiddenTrials = subjectInfo.levels.filter(lvl => lvl.pathType === 'hidden_trial');
 
+  const progressPercent = Math.round(
+    (clearedLevels.length / Math.max(1, mainLevels.length)) * 100
+  );
+
   const handleLevelClick = (levelIdentifier: number | string, levelNumber: number) => {
     if (StorageManager.isLevelUnlocked(subject, levelIdentifier)) {
       sounds.playClick();
@@ -39,77 +55,120 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
   };
 
   return (
-    <div className="relative min-h-[calc(100dvh-54px)] p-4 sm:p-8 flex flex-col items-center select-none overflow-y-auto">
+    <div className="relative min-h-[calc(100dvh-54px)] p-3 sm:p-8 flex flex-col items-center select-none overflow-y-auto bg-slate-950">
       <ParticleCanvas color={subjectInfo.themeColor} count={35} />
 
-      {/* Realm Banner Header */}
-      <div className="z-10 text-center max-w-2xl mb-6">
-        <span
-          className="text-xs font-mono-code font-bold uppercase tracking-widest px-3 py-1 rounded-full border shadow-sm"
-          style={{
-            backgroundColor: `${subjectInfo.themeColor}1a`,
-            borderColor: subjectInfo.themeColor,
-            color: subjectInfo.accentColor,
-          }}
-        >
-          {subjectInfo.name} Expedition
-        </span>
+      {/* TOP HEADER: REALM BANNER & PROGRESS HUD */}
+      <header className="z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center justify-between gap-4 mb-6">
+        {/* Left: Realm Identity */}
+        <div className="text-center lg:text-left flex flex-col items-center lg:items-start">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[11px] font-mono-code font-bold uppercase tracking-widest px-3 py-0.5 rounded-full border shadow-sm"
+              style={{
+                backgroundColor: `${subjectInfo.themeColor}1a`,
+                borderColor: subjectInfo.themeColor,
+                color: subjectInfo.accentColor,
+              }}
+            >
+              {subjectInfo.name} Realm Expedition
+            </span>
+          </div>
 
-        <h2 className="font-cinzel-dec font-bold text-3xl sm:text-4xl text-slate-100 tracking-wide mt-2">
-          {subjectInfo.realmName}
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Choose between gradual progression along the Meridian or dense mastery compression in the Crucible.
-        </p>
+          <h2 className="font-cinzel-dec font-extrabold text-2xl sm:text-4xl text-slate-100 tracking-wide mt-1.5 drop-shadow-md">
+            {subjectInfo.realmName}
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5 max-w-md">
+            Advance along the Grand Meridian or demonstrate multi-concept synthesis in the Crucible.
+          </p>
 
-        <div className="flex items-center justify-center gap-3 mt-3">
-          <button
-            onClick={() => { sounds.playClick(); onOpenStory(); }}
-            className="glass-panel px-3 py-1.5 rounded-lg text-xs font-cinzel font-semibold text-cyan-300 hover:text-white flex items-center gap-1.5 border border-cyan-500/40"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Realm Lore & Cards
-          </button>
+          <div className="flex items-center gap-2 mt-2.5">
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onOpenStory();
+              }}
+              className="glass-panel px-3 py-1.5 rounded-xl text-xs font-cinzel font-bold text-cyan-300 hover:text-white flex items-center gap-1.5 border border-cyan-500/40 shadow-sm transition-all min-h-[36px]"
+              aria-label="View Realm Lore"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Realm Lore & Cards
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Dual Progression Paths Grid */}
-      <div className="z-10 w-full max-w-5xl my-4 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        
-        {/* ROUTE 1: THE GRAND MERIDIAN (MAIN PATH) */}
-        <div className="glass-panel p-5 sm:p-6 rounded-3xl border border-slate-700/80 shadow-xl flex flex-col gap-5 relative overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        {/* Right: World Progress & Rewards Card (Matching Concept Art HUD) */}
+        <div className="glass-panel p-3.5 sm:p-4 rounded-2xl border border-slate-800 shadow-xl flex flex-col gap-2.5 w-full sm:w-auto min-w-[280px]">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-cinzel font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5 text-yellow-400" />
+              World Progress
+            </span>
+            <span className="text-xs font-mono-code font-bold text-cyan-300">
+              {clearedLevels.length} / {mainLevels.length} Levels ({progressPercent}%)
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-700/60">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 to-sky-400 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(6,182,212,0.8)]"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
+          {/* Next Rewards Line */}
+          <div className="flex items-center justify-between text-[11px] font-mono-code text-slate-400 border-t border-slate-800/80 pt-1.5">
+            <span className="flex items-center gap-1 text-slate-300 font-semibold">
+              <Award className="w-3 h-3 text-amber-400" /> Next Rewards:
+            </span>
+            <span className="text-amber-300 font-bold">+120 XP • Relic Shard</span>
+          </div>
+        </div>
+      </header>
+
+      {/* DUAL PROGRESSION PATHS: GRAND MERIDIAN & CRUCIBLE */}
+      <main className="z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start my-auto">
+        {/* ROUTE 1: THE GRAND MERIDIAN (MAIN PATH - 7 COLS) */}
+        <section
+          className="lg:col-span-7 glass-panel p-5 sm:p-6 rounded-3xl border border-slate-700/80 shadow-2xl flex flex-col gap-4 relative overflow-hidden"
+          aria-label="Grand Meridian Progressive Path"
+        >
+          <div className="flex items-center justify-between border-b border-slate-800/90 pb-2.5">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-400">
+              <span className="p-1.5 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 shadow-sm">
                 <Layers className="w-4 h-4" />
               </span>
               <div>
                 <h3 className="font-cinzel font-bold text-sm sm:text-base text-slate-100">
                   THE GRAND MERIDIAN
                 </h3>
-                <p className="text-[11px] text-slate-400 font-mono-code">
-                  Main Path • Progressive Single-Concept Mastery
+                <p className="text-[10px] text-slate-400 font-mono-code">
+                  Main Path • Progressive Step-by-Step Mastery
                 </p>
               </div>
             </div>
-            <span className="text-[10px] font-mono-code text-cyan-300 bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-700/50">
-              4 STAGES + BOSS
+            <span className="text-[10px] font-mono-code text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-700/50 font-bold">
+              {mainLevels.length} STAGES
             </span>
           </div>
 
-          <div className="flex flex-col gap-3.5 relative">
-            {mainLevels.map((lvl) => {
+          {/* Connected Winding Node Trail */}
+          <div className="flex flex-col gap-3 relative pt-1">
+            {mainLevels.map((lvl, index) => {
               const isCleared = clearedLevels.includes(lvl.levelNumber);
               const isUnlocked = StorageManager.isLevelUnlocked(subject, lvl.levelNumber);
               const isBoss = lvl.isBoss;
+              const isCurrent = isUnlocked && !isCleared;
 
-              let nodeStyle = 'border-slate-800 bg-slate-900/60 text-slate-500 opacity-60 cursor-not-allowed';
+              let nodeBorder = 'border-slate-800 bg-slate-900/60 text-slate-500 opacity-60 cursor-not-allowed';
               if (isCleared) {
-                nodeStyle = 'border-emerald-500/70 bg-emerald-950/60 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer hover:scale-[1.02]';
-              } else if (isUnlocked) {
-                nodeStyle = isBoss
-                  ? 'border-rose-500 bg-rose-950/80 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.5)] animate-pulse cursor-pointer hover:scale-[1.02]'
-                  : 'border-cyan-400 bg-cyan-950/70 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-pulse cursor-pointer hover:scale-[1.02]';
+                nodeBorder =
+                  'border-emerald-500/70 bg-gradient-to-r from-emerald-950/70 to-slate-900/80 text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.3)] cursor-pointer hover:scale-[1.02]';
+              } else if (isCurrent) {
+                nodeBorder = isBoss
+                  ? 'border-rose-500 bg-gradient-to-r from-rose-950/80 to-slate-900/90 text-rose-200 shadow-[0_0_25px_rgba(244,63,94,0.6)] animate-pulse cursor-pointer hover:scale-[1.02]'
+                  : 'border-cyan-400 bg-gradient-to-r from-cyan-950/80 to-slate-900/90 text-cyan-100 shadow-[0_0_25px_rgba(6,182,212,0.5)] animate-pulse cursor-pointer hover:scale-[1.02]';
               }
 
               return (
@@ -118,51 +177,76 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
                   role="button"
                   tabIndex={isUnlocked ? 0 : -1}
                   onClick={() => handleLevelClick(lvl.id, lvl.levelNumber)}
-                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleLevelClick(lvl.id, lvl.levelNumber)}
-                  className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all duration-200 ${nodeStyle}`}
+                  onKeyDown={e =>
+                    (e.key === 'Enter' || e.key === ' ') &&
+                    handleLevelClick(lvl.id, lvl.levelNumber)
+                  }
+                  className={`relative p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between gap-3 min-h-[48px] ${nodeBorder}`}
+                  aria-label={`${lvl.title} ${isCleared ? 'Cleared' : isUnlocked ? 'Unlocked' : 'Locked'}`}
                 >
+                  {/* Left Node Badge & Details */}
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center font-cinzel font-bold text-base border border-current">
-                      {isBoss ? (
-                        <Crown className="w-5 h-5 fill-current" />
-                      ) : isCleared ? (
-                        <CheckCircle2 className="w-5 h-5" />
-                      ) : isUnlocked ? (
-                        <Swords className="w-5 h-5" />
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-cinzel font-bold text-xs shrink-0 shadow-inner ${
+                        isCleared
+                          ? 'bg-emerald-900/80 border border-emerald-400 text-emerald-300'
+                          : isBoss
+                          ? 'bg-rose-950/90 border border-rose-400 text-rose-300'
+                          : isCurrent
+                          ? 'bg-cyan-950/90 border border-cyan-400 text-cyan-200'
+                          : 'bg-slate-900 border border-slate-700 text-slate-500'
+                      }`}
+                    >
+                      {isCleared ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : isBoss ? (
+                        <Crown className="w-4 h-4 text-rose-400" />
+                      ) : !isUnlocked ? (
+                        <Lock className="w-3.5 h-3.5 text-slate-500" />
                       ) : (
-                        <Lock className="w-4 h-4" />
+                        lvl.levelNumber
                       )}
                     </div>
 
-                    <div className="flex flex-col text-left">
+                    <div className="flex flex-col">
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-mono-code uppercase tracking-wider text-slate-400">
-                          {isBoss ? 'FINAL REALM BOSS' : `STAGE ${lvl.levelNumber}`}
+                        <span className="font-cinzel font-bold text-xs sm:text-sm text-slate-100">
+                          {lvl.title}
                         </span>
-                        {isCleared && (
-                          <span className="text-[9px] font-mono-code text-emerald-400 bg-emerald-950/90 px-1.5 py-0.2 rounded border border-emerald-500/40">
-                            MASTERED
+                        {isBoss && (
+                          <span className="text-[9px] font-mono-code font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-950 border border-rose-600 text-rose-300">
+                            SOVEREIGN
                           </span>
                         )}
-                        {!isCleared && isUnlocked && (
-                          <span className="text-[9px] font-mono-code text-cyan-300 bg-cyan-950/90 px-1.5 py-0.2 rounded border border-cyan-500/40">
-                            READY
+                        {isCurrent && !isBoss && (
+                          <span className="text-[9px] font-mono-code font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-600 text-cyan-300">
+                            CURRENT
                           </span>
                         )}
                       </div>
-                      <h4 className="font-cinzel font-bold text-sm text-slate-100">
-                        {lvl.title}
-                      </h4>
-                      <span className="text-[11px] text-slate-400 font-mono-code">
+                      <span className="text-[11px] text-slate-400 font-sans">
                         {lvl.topic}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center">
-                    {isUnlocked && (
-                      <span className="btn-fantasy-primary px-3 py-1 rounded-lg text-xs font-cinzel font-bold text-white shadow-sm">
-                        {isCleared ? 'Replay' : 'Engage'} →
+                  {/* Right Status Indicator */}
+                  <div className="shrink-0">
+                    {isCleared ? (
+                      <span className="text-[10px] font-mono-code font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-700">
+                        CLEARED
+                      </span>
+                    ) : isUnlocked ? (
+                      <button
+                        tabIndex={-1}
+                        className="btn-fantasy-primary px-3 py-1.5 rounded-xl text-xs font-cinzel font-bold text-white flex items-center gap-1 shadow-sm"
+                      >
+                        <Swords className="w-3.5 h-3.5" />
+                        Enter
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-mono-code text-slate-500 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                        LOCKED
                       </span>
                     )}
                   </div>
@@ -170,53 +254,50 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* ROUTE 2: THE CRUCIBLE OF COMPRESSION (HIDDEN PATH) */}
-        <div className="glass-panel-accent p-5 sm:p-6 rounded-3xl border-2 border-purple-500/50 shadow-2xl flex flex-col gap-5 relative overflow-hidden bg-gradient-to-b from-[#140b22]/90 via-[#0d0718]/90 to-[#07030e]/95">
-          <div className="flex items-center justify-between border-b border-purple-900/60 pb-3">
+        {/* ROUTE 2: CRUCIBLE OF COMPRESSION (HIDDEN PATH - 5 COLS) */}
+        <section
+          className="lg:col-span-5 glass-panel p-5 sm:p-6 rounded-3xl border border-purple-500/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden bg-gradient-to-b from-purple-950/20 via-slate-950 to-slate-950"
+          aria-label="Crucible of Compression Hidden Path"
+        >
+          <div className="flex items-center justify-between border-b border-purple-500/30 pb-2.5">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-purple-950/90 border border-purple-400/50 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+              <span className="p-1.5 rounded-xl bg-purple-950/90 border border-purple-500/50 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.4)]">
                 <Sparkles className="w-4 h-4" />
               </span>
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-cinzel font-bold text-sm sm:text-base text-purple-200">
-                    THE CRUCIBLE OF COMPRESSION
-                  </h3>
-                  <span className="text-[9px] font-mono-code text-amber-300 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-500/40">
-                    COMPRESSION ROUTE
-                  </span>
-                </div>
-                <p className="text-[11px] text-purple-300/80 font-mono-code">
-                  Denser Multi-Concept Trials • Early Boss Access
+                <h3 className="font-cinzel font-bold text-sm sm:text-base text-purple-100">
+                  CRUCIBLE OF COMPRESSION
+                </h3>
+                <p className="text-[10px] text-purple-300 font-mono-code">
+                  Hidden Path • Multi-Concept Synthesis
                 </p>
               </div>
             </div>
-            <span className="text-[10px] font-mono-code text-purple-300 bg-purple-950/70 px-2 py-0.5 rounded border border-purple-500/50">
-              2 TRIALS → BOSS
+            <span className="text-[10px] font-mono-code text-purple-300 bg-purple-950/70 px-2 py-0.5 rounded-full border border-purple-700/60 font-bold">
+              2 DENSE TRIALS
             </span>
           </div>
 
-          <div className="bg-purple-950/40 p-3 rounded-2xl border border-purple-900/50 text-[11px] text-purple-200/90 leading-relaxed font-sans">
-            <span className="font-bold text-amber-300">Mastery Compression:</span> Prove that you can synthesize multiple curriculum concepts together under pressure. Conquering both trials earns direct access to the Archon Boss without skipping learning!
-          </div>
+          <p className="text-xs text-slate-300 italic leading-relaxed">
+            Prove multi-concept mastery simultaneously to unlock the Sovereign encounter directly.
+          </p>
 
-          <div className="flex flex-col gap-3.5 relative">
-            {hiddenTrials.map((trial) => {
+          <div className="flex flex-col gap-3">
+            {hiddenTrials.map((trial, index) => {
               const isCleared = clearedTrials.includes(trial.id);
               const isUnlocked = StorageManager.isLevelUnlocked(subject, trial.id);
 
-              let nodeStyle = 'border-purple-950/80 bg-purple-950/20 text-purple-400/40 opacity-60 cursor-not-allowed';
+              let cardStyle =
+                'border-slate-800 bg-slate-900/50 text-slate-500 opacity-60 cursor-not-allowed';
               if (isCleared) {
-                nodeStyle = 'border-emerald-500/80 bg-emerald-950/60 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer hover:scale-[1.02]';
+                cardStyle =
+                  'border-emerald-500/70 bg-gradient-to-r from-emerald-950/70 to-slate-900/80 text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.3)] cursor-pointer hover:scale-[1.02]';
               } else if (isUnlocked) {
-                nodeStyle = 'border-purple-400 bg-purple-950/80 text-purple-200 shadow-[0_0_25px_rgba(168,85,247,0.6)] animate-pulse cursor-pointer hover:scale-[1.02]';
+                cardStyle =
+                  'border-purple-500 bg-gradient-to-r from-purple-950/80 to-slate-900/90 text-purple-100 shadow-[0_0_22px_rgba(168,85,247,0.5)] animate-pulse cursor-pointer hover:scale-[1.02]';
               }
-
-              const conceptLabels = (trial.compressedConcepts || []).map(c => 
-                c.replace('math_', '').replace('cs_', '').replace('_', ' ').toUpperCase()
-              ).join(' + ');
 
               return (
                 <div
@@ -224,102 +305,103 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
                   role="button"
                   tabIndex={isUnlocked ? 0 : -1}
                   onClick={() => handleLevelClick(trial.id, trial.levelNumber)}
-                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleLevelClick(trial.id, trial.levelNumber)}
-                  className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all duration-200 ${nodeStyle}`}
+                  onKeyDown={e =>
+                    (e.key === 'Enter' || e.key === ' ') &&
+                    handleLevelClick(trial.id, trial.levelNumber)
+                  }
+                  className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 flex flex-col gap-2 min-h-[48px] ${cardStyle}`}
+                  aria-label={`${trial.title} ${isCleared ? 'Cleared' : isUnlocked ? 'Unlocked' : 'Locked'}`}
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center font-cinzel font-bold text-base border border-current bg-purple-950/60 shadow-inner">
-                      {isCleared ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                      ) : isUnlocked ? (
-                        <Swords className="w-5 h-5 text-purple-300" />
-                      ) : (
-                        <Lock className="w-4 h-4 text-purple-500/50" />
-                      )}
-                    </div>
-
-                    <div className="flex flex-col text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-mono-code uppercase tracking-wider text-amber-300 bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-500/30">
-                          COMPRESSED MASTERY
-                        </span>
-                        {isCleared && (
-                          <span className="text-[9px] font-mono-code text-emerald-400 bg-emerald-950/90 px-1.5 py-0.2 rounded border border-emerald-500/40">
-                            PROVEN
-                          </span>
-                        )}
-                        {!isCleared && isUnlocked && (
-                          <span className="text-[9px] font-mono-code text-purple-200 bg-purple-950/90 px-1.5 py-0.2 rounded border border-purple-400/50">
-                            READY TO TEST
-                          </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-cinzel font-bold text-xs ${
+                          isCleared
+                            ? 'bg-emerald-900 border border-emerald-400 text-emerald-300'
+                            : isUnlocked
+                            ? 'bg-purple-900 border border-purple-400 text-purple-200'
+                            : 'bg-slate-900 border border-slate-700 text-slate-500'
+                        }`}
+                      >
+                        {isCleared ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          `T${index + 1}`
                         )}
                       </div>
-
-                      <h4 className="font-cinzel font-bold text-sm sm:text-base text-slate-100 mt-0.5">
+                      <span className="font-cinzel font-bold text-xs sm:text-sm text-slate-100">
                         {trial.title}
-                      </h4>
-
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] text-purple-300 font-mono-code bg-purple-900/40 px-2 py-0.5 rounded border border-purple-500/30">
-                          Combined: {conceptLabels}
-                        </span>
-                      </div>
+                      </span>
                     </div>
+
+                    {isCleared ? (
+                      <span className="text-[10px] font-mono-code font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700">
+                        COMPRESSED
+                      </span>
+                    ) : isUnlocked ? (
+                      <span className="text-[10px] font-mono-code font-bold text-purple-300 px-2 py-0.5 rounded bg-purple-950 border border-purple-700">
+                        AVAILABLE
+                      </span>
+                    ) : (
+                      <Lock className="w-3.5 h-3.5 text-slate-500" />
+                    )}
                   </div>
 
-                  <div className="flex items-center">
-                    {isUnlocked && (
-                      <span className="btn-fantasy-void px-3.5 py-1.5 rounded-xl text-xs font-cinzel font-bold text-white shadow-md">
-                        {isCleared ? 'Replay' : 'Enter Trial'} →
+                  {/* Compressed Concept Badges */}
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {(trial.compressedConcepts || []).map((concept, i) => (
+                      <span
+                        key={i}
+                        className="text-[9px] font-mono-code px-2 py-0.5 rounded bg-slate-950/80 border border-purple-700/50 text-purple-300"
+                      >
+                        {concept.replace(/_/g, ' ')}
                       </span>
-                    )}
+                    ))}
+                  </div>
+
+                  <div className="text-[10px] font-mono-code text-amber-300 flex items-center gap-1 border-t border-purple-500/20 pt-1.5 mt-1">
+                    <Award className="w-3 h-3 text-amber-400" />
+                    Mastery Trial: {trial.topic}
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Direct Boss Unlock Status Indicator */}
-          <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-purple-500/40 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <ShieldCheck className={`w-5 h-5 ${bossAccess.allowed ? 'text-emerald-400' : 'text-slate-500'}`} />
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] font-mono-code text-slate-400 uppercase">
-                  Archon Boss Access Status
-                </span>
-                <span className="text-xs font-bold font-cinzel text-slate-200">
-                  {bossAccess.allowed
-                    ? (bossAccess.route === 'compressed' ? 'Unlocked via Compression Route!' : 'Unlocked via Meridian Stage 4!')
-                    : 'Locked: Requires Meridian Stage 4 OR Compression Trial 2'}
-                </span>
-              </div>
+          {/* Final Boss Access Status Banner */}
+          <div
+            className={`p-3 rounded-2xl border text-xs flex items-center justify-between mt-auto ${
+              bossAccess
+                ? 'bg-amber-950/40 border-amber-500/50 text-amber-200'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Crown
+                className={`w-4 h-4 ${bossAccess ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`}
+              />
+              <span className="font-cinzel font-bold text-xs">Sovereign Gate Access:</span>
             </div>
-            {bossAccess.allowed && (
-              <button
-                onClick={() => {
-                  const bossLevel = mainLevels.find(l => l.isBoss);
-                  if (bossLevel) handleLevelClick(bossLevel.id, bossLevel.levelNumber);
-                }}
-                className="btn-fantasy-primary px-3 py-1.5 rounded-lg text-xs font-cinzel font-bold text-white"
-              >
-                Face Boss →
-              </button>
-            )}
+            <span className="font-mono-code font-bold text-[11px]">
+              {bossAccess ? 'UNLOCKED' : 'LOCKED (Clear Stage 4 or Trials 1+2)'}
+            </span>
           </div>
-        </div>
+        </section>
+      </main>
 
-      </div>
-
-      {/* Back to Subject Select */}
-      <div className="z-10 mt-auto pb-4">
+      {/* FOOTER ACTION */}
+      <footer className="z-10 mt-6 pb-4 flex items-center justify-between w-full max-w-6xl">
         <button
-          onClick={() => { sounds.playClick(); onBackToSubjects(); }}
-          className="px-4 py-2 rounded-xl glass-panel text-xs font-cinzel text-slate-300 hover:text-white flex items-center gap-1.5"
+          onClick={() => {
+            sounds.playClick();
+            onBackToSubjects();
+          }}
+          className="min-h-[44px] min-w-[44px] px-6 py-2.5 rounded-2xl glass-panel text-xs font-cinzel font-bold text-slate-200 hover:text-white hover:border-cyan-400/60 flex items-center gap-2 transition-all shadow-md active:scale-95"
+          aria-label="Return to realm selection"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Choose Another Realm
+          <ArrowLeft className="w-4 h-4" /> Return to Realms
         </button>
-      </div>
+      </footer>
     </div>
   );
 };
