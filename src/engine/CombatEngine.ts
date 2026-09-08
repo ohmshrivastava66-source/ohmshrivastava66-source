@@ -6,12 +6,17 @@ import { DiagnosisResult, DangerEventDefinition } from '../types/telemetry';
 import { sounds } from '../audio/SoundEffects';
 import { dangerEngine } from './DangerEngine';
 import { StorageManager } from '../persistence/StorageManager';
+import { questionSelectionEngine } from './QuestionSelectionEngine';
+import { QuestionVariant } from '../curriculum/questionPools';
 
 export interface CombatEngineState {
   player: PlayerState;
   enemy: EnemyState;
   currentStepIndex: number;
   currentEquationState: string;
+  currentObjective?: string;
+  encounterId?: string;
+  challengeIndex?: number;
   turnNumber: number;
   combatStatus: 'PLAYER_TURN' | 'PROCESSING' | 'ENEMY_TURN' | 'VICTORY' | 'DEFEAT';
   logs: BattleActionLog[];
@@ -32,6 +37,13 @@ export class CombatEngine {
     telemetry.reset();
 
     const initialCards = [...encounter.validCards];
+    // Ensure the expected first operation card is present in opening hand
+    const firstExpectedOp = encounter.optimalSequence[0];
+    const neededIdx = initialCards.findIndex(c => c.operationKey === firstExpectedOp);
+    if (neededIdx > 4) {
+      const [neededCard] = initialCards.splice(neededIdx, 1);
+      initialCards.unshift(neededCard);
+    }
     const startingHand = initialCards.slice(0, 5);
     const drawPile = initialCards.slice(5);
 
@@ -98,6 +110,9 @@ export class CombatEngine {
       },
       currentStepIndex: 0,
       currentEquationState: encounter.initialEquationOrState,
+      currentObjective: encounter.objective || encounter.problemStatement,
+      encounterId: encounter.id,
+      challengeIndex: 0,
       turnNumber: 1,
       combatStatus: 'PLAYER_TURN',
       logs: initialLogs,
@@ -294,8 +309,26 @@ export class CombatEngine {
   }
 
   public resetEncounter(): CombatEngineState {
+    const nextEncounter = questionSelectionEngine.getEncounterWithSelectedQuestion(this.encounter);
+    this.encounter = nextEncounter;
     const fresh = new CombatEngine(this.encounter, this.state.activeDanger);
     this.state = fresh.state;
+    return this.state;
+  }
+
+  public advanceToQuestion(question: QuestionVariant): CombatEngineState {
+    this.state.currentEquationState = question.initialEquationOrState;
+    this.state.currentObjective = question.objective;
+    this.state.currentStepIndex = 0;
+    this.state.challengeIndex = (this.state.challengeIndex || 0) + 1;
+    this.encounter.optimalSequence = [...question.optimalSequence];
+    this.encounter.stepTransformations = question.stepTransformations.map(st => ({ ...st }));
+    this.encounter.misconceptions = [...question.misconceptions];
+    this.encounter.initialEquationOrState = question.initialEquationOrState;
+    this.encounter.targetState = question.targetState;
+    this.encounter.objective = question.objective;
+    this.encounter.problemStatement = question.problemStatement;
+    this.addLog('system', `Next challenge presented: ${question.objective}`, 'card');
     return this.state;
   }
 

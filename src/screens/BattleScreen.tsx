@@ -34,10 +34,19 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   onDefeat,
   onEnterEchoVault,
 }) => {
-  const [engine] = useState(() => new CombatEngine(encounter, activeDanger));
+  const [engine, setEngine] = useState(() => new CombatEngine(encounter, activeDanger));
   const [gameState, setGameState] = useState<CombatEngineState>(() => engine.getState());
   const [characterPose, setCharacterPose] = useState<CharacterActionState>('idle');
   const [monsterHurt, setMonsterHurt] = useState(false);
+
+  // Reactive synchronization: reinitialize engine when encounter changes
+  useEffect(() => {
+    const freshEngine = new CombatEngine(encounter, activeDanger);
+    setEngine(freshEngine);
+    setGameState(freshEngine.getState());
+    setCharacterPose('idle');
+    setMonsterHurt(false);
+  }, [encounter.id, encounter.initialEquationOrState, activeDanger]);
 
   // Synchronize state changes & transitions
   useEffect(() => {
@@ -233,7 +242,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                 Objective
               </span>
               <p className="text-[11px] text-cyan-200/90 leading-relaxed font-sans">
-                {encounter.objective || encounter.problemStatement}
+                {gameState.currentObjective || encounter.objective || encounter.problemStatement}
               </p>
             </div>
           </div>

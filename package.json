@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "npx jiti src/test_question_progression.ts && npx jiti src/test_learning_dna.ts && npx jiti src/test_convergence.ts && npx jiti src/test_surprise_attack.ts && npx jiti src/test_danger_system.ts && npx jiti src/test_mastery_compression.ts && npx jiti src/test_exam_integrity.ts && npx jiti src/test_engine.ts",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -35,6 +35,7 @@ import { MirrorBossDefinition, EndingVariant } from './types/learningDna';
 import { observerEngine } from './engine/ObserverEngine';
 import { mirrorBossEngine } from './engine/MirrorBossEngine';
 import { sounds } from './audio/SoundEffects';
+import { questionSelectionEngine } from './engine/QuestionSelectionEngine';
 
 export const App: React.FC = () => {
   // Screen & Navigation State
@@ -43,6 +44,8 @@ export const App: React.FC = () => {
   const [activeLevelNumber, setActiveLevelNumber] = useState<number>(1);
   const [activeVaultId, setActiveVaultId] = useState<string>('vault_factorization');
   const [isJudgeDemo, setIsJudgeDemo] = useState<boolean>(false);
+  const [battleSessionId, setBattleSessionId] = useState<number>(0);
+  const [activeEncounterInstance, setActiveEncounterInstance] = useState<EncounterDefinition | null>(null);
   const [activeDangerEvent, setActiveDangerEvent] = useState<DangerEventDefinition | undefined>(undefined);
   const [savedNormalLevel, setSavedNormalLevel] = useState<number>(1);
   const [activeSurpriseAttack, setActiveSurpriseAttack] = useState<SurpriseAttackDefinition | null>(null);
@@ -74,36 +77,59 @@ export const App: React.FC = () => {
 
   // Get active encounter object
   const getActiveEncounter = (): EncounterDefinition => {
+    if (
+      activeEncounterInstance &&
+      activeEncounterInstance.subject === activeSubject &&
+      activeEncounterInstance.levelNumber === activeLevelNumber
+    ) {
+      return activeEncounterInstance;
+    }
     const subjectEncounters = ENCOUNTERS_MAP[activeSubject] || ENCOUNTERS_MAP.mathematics;
-    const found = subjectEncounters.find(e => e.levelNumber === activeLevelNumber);
-    return found || subjectEncounters[0];
+    const found = subjectEncounters.find(e => e.levelNumber === activeLevelNumber) || subjectEncounters[0];
+    return questionSelectionEngine.getEncounterWithSelectedQuestion(found, {
+      isJudgeDemo,
+    });
   };
 
   // Launch the 5-Minute Golden Judge Demo (Strictly 0% Danger & 0% Surprise Attack)
   const handleLaunchJudgeDemo = () => {
     sounds.playClick();
     setIsJudgeDemo(true);
+    setBattleSessionId(prev => prev + 1);
     setActiveDangerEvent(undefined);
     setActiveSurpriseAttack(null);
     setActiveSubject('mathematics');
     setActiveLevelNumber(1);
+    const baseMath = ENCOUNTERS_MAP.mathematics[0];
+    const demoEncounter = questionSelectionEngine.getEncounterWithSelectedQuestion(baseMath, {
+      isJudgeDemo: true,
+    });
+    setActiveEncounterInstance(demoEncounter);
     setCurrentScreen('BATTLE');
   };
 
   // Handlers for Screen Transitions
   const handleSelectSubject = (subj: SubjectId) => {
     setActiveSubject(subj);
+    setActiveEncounterInstance(null);
     setCurrentScreen('WORLD_MAP');
   };
 
   const handleSelectLevel = (levelNumber: number) => {
     setActiveLevelNumber(levelNumber);
+    setActiveEncounterInstance(null);
     setCurrentScreen('STORY_INTRO');
   };
 
   const handleStartBattle = () => {
     setIsJudgeDemo(false);
-    const encounter = getActiveEncounter();
+    setBattleSessionId(prev => prev + 1);
+    const subjectEncounters = ENCOUNTERS_MAP[activeSubject] || ENCOUNTERS_MAP.mathematics;
+    const found = subjectEncounters.find(e => e.levelNumber === activeLevelNumber) || subjectEncounters[0];
+    const encounter = questionSelectionEngine.getEncounterWithSelectedQuestion(found, {
+      isJudgeDemo: false,
+    });
+    setActiveEncounterInstance(encounter);
 
     // Check for Surprise Attack:
     // Only triggers for normal battles (not Judge Demo, not hidden trial, not already in surprise attack)
@@ -289,6 +315,8 @@ export const App: React.FC = () => {
 
   const handleReturnToMainPathStage = (stageNumber: number) => {
     setActiveLevelNumber(stageNumber);
+    setActiveEncounterInstance(null);
+    setBattleSessionId(prev => prev + 1);
     setCurrentScreen('STORY_INTRO');
   };
 
@@ -299,6 +327,9 @@ export const App: React.FC = () => {
   };
 
   const handleProceedToNextLevel = () => {
+    setActiveEncounterInstance(null);
+    setBattleSessionId(prev => prev + 1);
+
     // Check if Mirror Boss triggers (only when defeated a boss, not in Judge Demo)
     if (lastVictoryEncounter?.isBoss && !isJudgeDemo) {
       const mirrorCheck = mirrorBossEngine.evaluateMirrorBossOpportunity(
@@ -416,6 +447,7 @@ export const App: React.FC = () => {
 
         {currentScreen === 'BATTLE' && (
           <BattleScreen
+            key={`${getActiveEncounter().id}_${activeLevelNumber}_${battleSessionId}_${getActiveEncounter().initialEquationOrState}`}
             encounter={getActiveEncounter()}
             activeDanger={activeDangerEvent}
             onVictory={handleVictory}
