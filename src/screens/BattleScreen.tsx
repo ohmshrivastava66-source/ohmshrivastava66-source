@@ -288,6 +288,16 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         <div className="flex items-center gap-3.5 w-full sm:w-auto justify-end">
           <div className="flex flex-col items-end">
             <div className="flex items-center gap-1.5">
+              {gameState.enemy.phase > 1 && (
+                <span className="text-[9px] font-mono-code font-bold uppercase px-1.5 py-0.5 rounded bg-purple-950 border border-purple-500/80 text-purple-300">
+                  PHASE {gameState.enemy.phase}
+                </span>
+              )}
+              {gameState.enemy.isGuardianBarrierActive && (
+                <span className="text-[9px] font-mono-code font-bold uppercase px-1.5 py-0.5 rounded bg-amber-950 border border-amber-400 text-amber-300 animate-pulse">
+                  AEGIS
+                </span>
+              )}
               <span className="font-cinzel font-bold text-xs text-rose-300">
                 {gameState.enemy.name}
               </span>
@@ -340,18 +350,30 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           monsterAdapted={!!gameState.enemy.adaptedModifier}
           monsterAdaptedLabel={gameState.enemy.adaptedModifier?.name}
           monsterPhase={gameState.enemy.phase}
+          isGuardianBarrierActive={gameState.enemy.isGuardianBarrierActive}
           subject={encounter.subject}
         >
           {/* THE ARCANE QUESTION & OBJECTIVE PANEL (Embedded Centrally) */}
           <section
-            className="glass-panel-glow w-full p-4 rounded-3xl border border-cyan-500/50 shadow-2xl flex flex-col gap-2.5 backdrop-blur-lg"
+            className={`w-full p-4 rounded-3xl border shadow-2xl flex flex-col gap-2.5 backdrop-blur-lg transition-all duration-300 ${
+              gameState.enemy.fracturedStateActive
+                ? 'glass-panel border-purple-500/80 shadow-[0_0_30px_rgba(168,85,247,0.4)]'
+                : 'glass-panel-glow border-cyan-500/50'
+            }`}
             aria-label="Academic Challenge"
           >
             <div className="flex items-center justify-between border-b border-cyan-500/20 pb-1.5">
-              <span className="text-[10px] font-mono-code uppercase tracking-widest text-cyan-300 flex items-center gap-1 font-bold">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                {encounter.conceptName}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono-code uppercase tracking-widest text-cyan-300 flex items-center gap-1 font-bold">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                  {encounter.conceptName}
+                </span>
+                {gameState.enemy.fracturedStateActive && (
+                  <span className="text-[8px] font-mono-code font-bold uppercase px-1.5 py-0.2 rounded bg-purple-950/90 border border-purple-400 text-purple-300 animate-pulse">
+                    FRACTURED
+                  </span>
+                )}
+              </div>
               <span className="text-[9px] font-mono-code text-slate-400 uppercase tracking-wider">
                 Step {gameState.currentStepIndex + 1} / {encounter.optimalSequence.length}
               </span>

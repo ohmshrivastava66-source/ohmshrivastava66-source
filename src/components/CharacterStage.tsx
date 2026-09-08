@@ -15,6 +15,7 @@ interface CharacterStageProps {
   monsterAdaptedLabel?: string;
   monsterPhase?: number;
   subject?: SubjectId;
+  isGuardianBarrierActive?: boolean;
   children?: React.ReactNode; // Optional center question panel slot
 }
 
@@ -35,6 +36,7 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
   monsterAdaptedLabel,
   monsterPhase = 1,
   subject = 'mathematics',
+  isGuardianBarrierActive = false,
   children,
 }) => {
   return (
@@ -67,6 +69,15 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
       {/* RIGHT ARENA: MASSIVE RAID BOSS */}
       <div className="flex flex-col items-center justify-end order-3 flex-1 max-w-[420px]">
         <div className="relative flex items-center justify-center">
+          {/* Guardian Barrier Crystalline Aegis */}
+          {isGuardianBarrierActive && (
+            <div className="absolute -inset-4 rounded-full border-4 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.9)] animate-pulse pointer-events-none z-20 flex items-center justify-center">
+              <span className="absolute -top-3.5 px-3 py-0.5 rounded-full bg-amber-950/95 border border-amber-400 text-amber-200 text-[9px] font-mono-code font-extrabold uppercase tracking-wider shadow-lg">
+                GUARDIAN BARRIER ACTIVE
+              </span>
+            </div>
+          )}
+
           <MonsterRenderer
             visualType={monsterVisualType}
             isHurt={monsterHurt}

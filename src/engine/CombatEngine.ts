@@ -9,6 +9,7 @@ import { StorageManager } from '../persistence/StorageManager';
 import { questionSelectionEngine } from './QuestionSelectionEngine';
 import { QuestionVariant } from '../curriculum/questionPools';
 import { solutionPathEngine, SolutionGraph } from './SolutionPathEngine';
+import { bossAbilityEngine } from './BossAbilityEngine';
 
 export interface CombatEngineState {
   player: PlayerState;
@@ -29,6 +30,7 @@ export interface CombatEngineState {
   lastCardPlayed?: Card;
   hiddenCards?: string[];
   costModifiers?: Record<string, number>;
+  isJudgeDemo?: boolean;
 }
 
 export class CombatEngine {
@@ -37,7 +39,11 @@ export class CombatEngine {
   private solutionGraph: SolutionGraph;
   private activePathId: string;
 
-  constructor(encounter: EncounterDefinition, activeDanger?: DangerEventDefinition) {
+  constructor(
+    encounter: EncounterDefinition,
+    activeDanger?: DangerEventDefinition,
+    isJudgeDemo?: boolean
+  ) {
     this.encounter = encounter;
     telemetry.reset();
 
@@ -132,6 +138,7 @@ export class CombatEngine {
       activeDanger,
       hiddenCards: [],
       costModifiers: {},
+      isJudgeDemo: isJudgeDemo || (encounter as any).isJudgeDemo || false,
     };
     this.activePathId = this.solutionGraph.primaryPath.id;
 
@@ -239,8 +246,13 @@ export class CombatEngine {
       const damage = Math.max(card.damage, stepTrans?.damageValue || 30);
       const shieldGained = card.shield || 10;
 
-      // Apply damage to enemy
-      this.damageEnemy(damage);
+      // Apply damage to enemy (unless absorbed by Guardian Barrier)
+      if (this.state.enemy.isGuardianBarrierActive) {
+        this.state.enemy.isGuardianBarrierActive = false;
+        this.addLog('enemy', `${this.state.enemy.name}'s Guardian Barrier absorbed the blow and shattered! Educational proof held firm!`, 'adapt');
+      } else {
+        this.damageEnemy(damage);
+      }
       this.state.player.shield += shieldGained;
 
       // Update problem equation state
@@ -251,6 +263,22 @@ export class CombatEngine {
 
       // Advance step index
       this.state.currentStepIndex += 1;
+
+      // Escalate boss phase if HP crossed phase boundary
+      const currentPhase = bossAbilityEngine.evaluatePhase(this.state.enemy.currentHp, this.state.enemy.maxHp);
+      this.state.enemy.phase = currentPhase;
+
+      // Evaluate boss CounterSign response in Phase 2+
+      const countersign = bossAbilityEngine.evaluateCountersign(
+        this.solutionGraph,
+        this.state,
+        this.encounter,
+        card.operationKey,
+        this.state.isJudgeDemo
+      );
+      if (countersign) {
+        this.applyBossModifier(countersign);
+      }
 
       // Check if all steps complete on current active path or enemy destroyed
       const currentActivePath = this.solutionGraph.allPaths.find(p => p.id === this.activePathId) || this.solutionGraph.primaryPath;
@@ -369,17 +397,21 @@ export class CombatEngine {
       if (drawn) this.state.player.hand.push(drawn);
     }
 
-    // If boss battle, boss may attempt safe interference
-    if (this.encounter.isBoss && this.state.turnNumber % 2 === 0 && this.state.player.hand.length > 0) {
-      const candidate = this.state.player.hand[this.state.player.hand.length - 1];
-      const bossMod: BossModifier = {
-        id: `boss_turn_${this.state.turnNumber}_mod`,
-        name: 'Shadow Shroud',
-        type: 'hide_card',
-        targetCardId: candidate.id,
-        description: `Shrouded ${candidate.name} in mist.`,
-      };
-      this.applyBossModifier(bossMod);
+    // If boss battle, evaluate intelligent fair interference via BossAbilityEngine
+    const interference = bossAbilityEngine.evaluateTurnInterference(
+      this.solutionGraph,
+      this.state,
+      this.encounter,
+      this.state.isJudgeDemo
+    );
+    if (interference.phaseTransition) {
+      this.state.enemy.phase = interference.phase;
+    }
+    for (const mod of interference.modifiers) {
+      this.applyBossModifier(mod);
+    }
+    if (interference.bannerMessage) {
+      this.addLog('enemy', interference.bannerMessage, 'adapt');
     }
 
     // Guarantee that the new turn state is 100% solvable

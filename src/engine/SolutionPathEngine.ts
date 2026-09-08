@@ -679,6 +679,14 @@ export class SolutionPathEngine {
       if (modifier.targetCardId) {
         clonedState.hiddenCards!.push(modifier.targetCardId);
       }
+    } else if (
+      modifier.type === 'guardian_phase' ||
+      modifier.type === 'fractured_state' ||
+      modifier.type === 'distortion' ||
+      modifier.type === 'countersign'
+    ) {
+      // Defensive/presentation effects do not restrict card plays
+      return true;
     }
 
     const report = this.validateSolvability(graph, clonedState);
@@ -719,6 +727,18 @@ export class SolutionPathEngine {
         if (modifier.targetOperation) {
           state.costModifiers[modifier.targetOperation] = (state.costModifiers[modifier.targetOperation] || 0) + inc;
         }
+      } else if (modifier.type === 'guardian_phase') {
+        state.enemy.isGuardianBarrierActive = true;
+      } else if (modifier.type === 'fractured_state') {
+        state.enemy.fracturedStateActive = true;
+      } else if (modifier.type === 'distortion') {
+        // Shuffle non-critical cards in hand to simulate battlefield distortion
+        if (state.player.hand.length >= 2) {
+          const last = state.player.hand.pop()!;
+          state.player.hand.splice(1, 0, last);
+        }
+      } else if (modifier.type === 'countersign') {
+        state.enemy.shield += 15;
       }
       return { state, applied: true };
     }

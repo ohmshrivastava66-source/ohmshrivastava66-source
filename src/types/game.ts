@@ -90,12 +90,25 @@ export interface PlayerState {
 export interface BossModifier {
   id: string;
   name: string;
-  type: 'hide_card' | 'increase_cost' | 'disable_optional' | 'extra_step' | 'lock_card';
+  type:
+    | 'hide_card'
+    | 'increase_cost'
+    | 'disable_optional'
+    | 'extra_step'
+    | 'lock_card'
+    | 'fractured_state'
+    | 'guardian_phase'
+    | 'countersign'
+    | 'distortion';
   targetCardId?: string;
   targetOperation?: string;
   costIncrease?: number;
   description: string;
   durationTurns?: number;
+  fracturedVisualPrompt?: string;
+  guardianBarrierHp?: number;
+  isGuardianBarrierActive?: boolean;
+  countersignEffect?: string;
 }
 
 export interface EnemyIntent {
@@ -125,6 +138,9 @@ export interface EnemyState {
   };
   phase: number;
   maxPhases: number;
+  activeAbilities?: string[];
+  isGuardianBarrierActive?: boolean;
+  fracturedStateActive?: boolean;
 }
 
 export interface BattleActionLog {
