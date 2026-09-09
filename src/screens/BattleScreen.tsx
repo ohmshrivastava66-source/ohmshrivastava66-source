@@ -52,11 +52,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   // Boss Intro Cinematic Gate
   const isBossFight =
     encounter.isBoss ||
-    encounter.levelNumber === 5 ||
+    (encounter.subject !== 'data_structures_algorithms' && encounter.levelNumber === 5) ||
     (encounter.enemy.title &&
       (encounter.enemy.title.toLowerCase().includes('archon') ||
         encounter.enemy.title.toLowerCase().includes('sovereign') ||
-        encounter.enemy.title.toLowerCase().includes('guardian')));
+        encounter.enemy.title.toLowerCase().includes('colossus')));
   const [showBossIntro, setShowBossIntro] = useState(() => !!isBossFight);
 
   const subjectMeta = ALL_SUBJECTS[encounter.subject];

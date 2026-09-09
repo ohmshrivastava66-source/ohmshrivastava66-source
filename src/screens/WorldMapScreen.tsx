@@ -1,6 +1,11 @@
 import React from 'react';
-import { SubjectId } from '../types/game';
+import { SubjectId, KingdomId, ClassId } from '../types/game';
 import { ALL_SUBJECTS } from '../curriculum/registry';
+import {
+  getKingdom,
+  getClass,
+  resolveEducationalContext,
+} from '../curriculum/educationHierarchy';
 import { PlayerProfile } from '../types/telemetry';
 import { ParticleCanvas } from '../components/ParticleCanvas';
 import { StorageManager } from '../persistence/StorageManager';
@@ -36,8 +41,12 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
   onBackToSubjects,
 }) => {
   const subjectInfo = ALL_SUBJECTS[subject];
-  const clearedLevels = profile.clearedLevels[subject] || [];
-  const clearedTrials = profile.clearedHiddenTrials?.[subject] || [];
+  const context = resolveEducationalContext(profile);
+  const activeK = getKingdom((profile.activeKingdom as KingdomId) || context.kingdomId);
+  const activeC = getClass((profile.activeClass as ClassId) || context.classId);
+  const ctxProgress = StorageManager.getContextProgress(profile, activeK?.id, activeC?.id, subject);
+  const clearedLevels = ctxProgress.clearedLevels;
+  const clearedTrials = ctxProgress.clearedHiddenTrials;
   const bossAccess = MasteryCompressionEngine.canAccessFinalBoss(subject, profile);
 
   const mainLevels = subjectInfo.levels.filter(lvl => lvl.pathType !== 'hidden_trial');
@@ -48,7 +57,7 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
   );
 
   const handleLevelClick = (levelIdentifier: number | string, levelNumber: number) => {
-    if (StorageManager.isLevelUnlocked(subject, levelIdentifier)) {
+    if (StorageManager.isLevelUnlocked(subject, levelIdentifier, profile, activeC?.id, activeK?.id)) {
       sounds.playClick();
       onSelectLevel(levelNumber);
     }
@@ -71,7 +80,7 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
                 color: subjectInfo.accentColor,
               }}
             >
-              {subjectInfo.name} Realm Expedition
+              {activeK?.name} • {activeC?.name} • {subjectInfo.name} Expedition
             </span>
           </div>
 
@@ -157,7 +166,7 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
           <div className="flex flex-col gap-3 relative pt-1">
             {mainLevels.map((lvl, index) => {
               const isCleared = clearedLevels.includes(lvl.levelNumber);
-              const isUnlocked = StorageManager.isLevelUnlocked(subject, lvl.levelNumber);
+              const isUnlocked = StorageManager.isLevelUnlocked(subject, lvl.id, profile, activeC?.id, activeK?.id);
               const isBoss = lvl.isBoss;
               const isCurrent = isUnlocked && !isCleared;
 
@@ -287,7 +296,7 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
           <div className="flex flex-col gap-3">
             {hiddenTrials.map((trial, index) => {
               const isCleared = clearedTrials.includes(trial.id);
-              const isUnlocked = StorageManager.isLevelUnlocked(subject, trial.id);
+              const isUnlocked = StorageManager.isLevelUnlocked(subject, trial.id, profile, activeC?.id, activeK?.id);
 
               let cardStyle =
                 'border-slate-800 bg-slate-900/50 text-slate-500 opacity-60 cursor-not-allowed';

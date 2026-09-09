@@ -225,7 +225,8 @@ export class LearningProfileTranslator {
    * Checks whether a specific realm sovereign has been defeated.
    */
   public static isBossDefeated(profile: PlayerProfile, subject: SubjectId): boolean {
-    const requiredLevel = REALM_BOSS_LEVELS[subject];
+    const requiredLevel = (REALM_BOSS_LEVELS as Record<string, number>)[subject];
+    if (!requiredLevel) return false;
     const cleared = profile.clearedLevels[subject] || [];
     return cleared.includes(requiredLevel);
   }

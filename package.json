@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "npx jiti src/test_boss_difficulty_engine.ts && npx jiti src/test_profile_codex.ts && npx jiti src/test_solution_path_engine.ts && npx jiti src/test_question_progression.ts && npx jiti src/test_learning_dna.ts && npx jiti src/test_convergence.ts && npx jiti src/test_surprise_attack.ts && npx jiti src/test_danger_system.ts && npx jiti src/test_mastery_compression.ts && npx jiti src/test_exam_integrity.ts && npx jiti src/test_engine.ts",
+    "test": "npx jiti src/test_educational_hierarchy.ts && npx jiti src/test_boss_difficulty_engine.ts && npx jiti src/test_profile_codex.ts && npx jiti src/test_solution_path_engine.ts && npx jiti src/test_question_progression.ts && npx jiti src/test_learning_dna.ts && npx jiti src/test_convergence.ts && npx jiti src/test_surprise_attack.ts && npx jiti src/test_danger_system.ts && npx jiti src/test_mastery_compression.ts && npx jiti src/test_exam_integrity.ts && npx jiti src/test_engine.ts && npx jiti src/test_module_1_acceptance.ts && npx jiti src/test_module_2_acceptance.ts && npx jiti src/test_module_3_acceptance.ts && npx jiti src/test_module_4_acceptance.ts && npx jiti src/test_module_5_acceptance.ts",
     "preview": "vite preview"
   },
   "dependencies": {

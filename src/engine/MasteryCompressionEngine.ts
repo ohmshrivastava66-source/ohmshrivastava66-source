@@ -36,6 +36,12 @@ export class MasteryCompressionEngine {
       'cs_sorting',
       'cs_dynamic_programming',
     ],
+    data_structures_algorithms: [
+      'dsa_asymptotic_recurrence',
+      'dsa_divide_conquer',
+      'dsa_balanced_trees',
+      'dsa_graph_shortest_path',
+    ],
     physics: ['phys_force_acceleration', 'phys_potential_kinetic'],
     chemistry: ['chem_stoichiometry', 'chem_titration_ph'],
     biology: ['bio_transcription', 'bio_mitosis'],
@@ -58,6 +64,12 @@ export class MasteryCompressionEngine {
       3: 'cs_sorting',
       4: 'cs_dynamic_programming',
     },
+    data_structures_algorithms: {
+      1: 'dsa_asymptotic_recurrence',
+      2: 'dsa_divide_conquer',
+      3: 'dsa_balanced_trees',
+      4: 'dsa_graph_shortest_path',
+    },
     physics: { 1: 'phys_force_acceleration', 2: 'phys_potential_kinetic' },
     chemistry: { 1: 'chem_stoichiometry', 2: 'chem_titration_ph' },
     biology: { 1: 'bio_transcription', 2: 'bio_mitosis' },
@@ -78,6 +90,7 @@ export class MasteryCompressionEngine {
   public static readonly REQUIRED_HIDDEN_TRIALS: Record<SubjectId, string[]> = {
     mathematics: ['math_hidden_trial_1', 'math_hidden_trial_2'],
     computerScience: ['cs_hidden_trial_1', 'cs_hidden_trial_2'],
+    data_structures_algorithms: [],
     physics: [],
     chemistry: [],
     biology: [],

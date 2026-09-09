@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppScreen, SubjectId, Card } from './types/game';
 import { EncounterDefinition } from './types/curriculum';
 import { PlayerProfile, DangerEventDefinition } from './types/telemetry';
-import { ENCOUNTERS_MAP, ECHO_VAULTS_MAP } from './curriculum/registry';
+import { ENCOUNTERS_MAP, ECHO_VAULTS_MAP, getAvailableSubjectsForClass, getClass } from './curriculum/registry';
 import { StorageManager } from './persistence/StorageManager';
 import { dangerEngine } from './engine/DangerEngine';
 import { surpriseAttackEngine } from './engine/SurpriseAttackEngine';
@@ -410,6 +410,7 @@ export const App: React.FC = () => {
           <SubjectSelectScreen
             profile={profile}
             onSelectSubject={handleSelectSubject}
+            onChangeEducationRank={() => setCurrentScreen('EDUCATION_SELECT')}
             onBack={() => setCurrentScreen('HOME')}
           />
         )}
@@ -417,10 +418,20 @@ export const App: React.FC = () => {
         {currentScreen === 'EDUCATION_SELECT' && (
           <EducationSelectScreen
             profile={profile}
-            onSelectTier={(tierId) => {
-              const updated = { ...profile, activeEducationLevel: tierId };
+            onSelectKingdomAndClass={(kingdomId, classId) => {
+              const updated = {
+                ...profile,
+                activeKingdom: kingdomId,
+                activeClass: classId,
+              };
               StorageManager.saveProfile(updated);
               setProfile(updated);
+              // Ensure activeSubject is valid for new class
+              const allowed = getAvailableSubjectsForClass(classId);
+              if (!allowed.includes(activeSubject)) {
+                const cls = getClass(classId);
+                if (cls) setActiveSubject(cls.defaultSubjectId);
+              }
               setCurrentScreen('SUBJECT_SELECT');
             }}
             onBack={() => setCurrentScreen('HOME')}

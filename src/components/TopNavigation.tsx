@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { AppScreen, SubjectId } from '../types/game';
+import { AppScreen, SubjectId, KingdomId, ClassId } from '../types/game';
 import { ALL_SUBJECTS } from '../curriculum/registry';
+import {
+  getKingdom,
+  getClass,
+  resolveEducationalContext,
+} from '../curriculum/educationHierarchy';
 import { PlayerProfile } from '../types/telemetry';
-import { Volume2, VolumeX, Sparkles, Compass, Shield, User, PlayCircle } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles, Compass, Shield, User, PlayCircle, GraduationCap } from 'lucide-react';
 import { sounds } from '../audio/SoundEffects';
 
 interface TopNavigationProps {
@@ -30,6 +35,9 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
   };
 
   const subjectInfo = activeSubject ? ALL_SUBJECTS[activeSubject] : null;
+  const context = resolveEducationalContext(profile);
+  const activeK = getKingdom((profile.activeKingdom as KingdomId) || context.kingdomId);
+  const activeC = getClass((profile.activeClass as ClassId) || context.classId);
 
   return (
     <header className="w-full z-40 bg-[#070911]/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-2.5 flex items-center justify-between select-none">
@@ -56,21 +64,51 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
         </div>
       </div>
 
-      {/* Active Subject Pill (if inside a subject) */}
-      {subjectInfo && (
-        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 border border-slate-700/60 px-3 py-1 rounded-full text-xs">
-          <span
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: subjectInfo.themeColor }}
-          />
-          <span className="font-cinzel font-semibold text-slate-200">
-            {subjectInfo.realmName}
-          </span>
-        </div>
-      )}
+      {/* Active Educational Hierarchy Breadcrumb Pill */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          sounds.playClick();
+          onNavigate('EDUCATION_SELECT');
+        }}
+        className="hidden sm:flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/60 hover:border-purple-500/50 px-3 py-1 rounded-full text-xs cursor-pointer transition-all shadow-sm group"
+        title="Click to change Kingdom or Academic Rank"
+      >
+        <GraduationCap className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+        <span className="font-cinzel text-slate-300 text-[11px] font-semibold">
+          {activeK?.name || 'Kingdom'}
+        </span>
+        <span className="text-slate-500 text-[10px]">›</span>
+        <span className="font-mono-code font-bold text-purple-300 text-[11px]">
+          {activeC?.name || 'Class'}
+        </span>
+        {subjectInfo && (
+          <>
+            <span className="text-slate-500 text-[10px]">›</span>
+            <span
+              className="font-cinzel font-bold text-[11px]"
+              style={{ color: subjectInfo.accentColor }}
+            >
+              {subjectInfo.realmName}
+            </span>
+          </>
+        )}
+      </div>
 
       {/* Center Navigation Links (Hidden on small mobile) */}
       <nav className="hidden md:flex items-center gap-1.5 text-xs font-cinzel font-semibold text-slate-300">
+        <button
+          onClick={() => { sounds.playClick(); onNavigate('EDUCATION_SELECT'); }}
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 ${
+            currentScreen === 'EDUCATION_SELECT'
+              ? 'bg-purple-950/80 text-purple-300 border border-purple-500/40'
+              : 'hover:bg-slate-800/60 hover:text-white'
+          }`}
+        >
+          <GraduationCap className="w-3.5 h-3.5" />
+          Kingdom
+        </button>
         <button
           onClick={() => { sounds.playClick(); onNavigate('SUBJECT_SELECT'); }}
           className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 ${

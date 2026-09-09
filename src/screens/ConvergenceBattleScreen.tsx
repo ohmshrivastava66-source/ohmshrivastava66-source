@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ConvergenceTrial } from '../types/convergence';
 import { PlayerProfile } from '../types/telemetry';
-import { SubjectId } from '../types/game';
+import { SubjectId, CanonicalRealmId } from '../types/game';
 import { convergenceEngine, BOSS_COUNCIL_MEMBERS } from '../engine/ConvergenceEngine';
 import { ParticleCanvas } from '../components/ParticleCanvas';
 import {
@@ -27,7 +27,7 @@ interface ConvergenceBattleScreenProps {
   onReturnToMap: () => void;
 }
 
-const ALL_COUNCIL_IDS: SubjectId[] = [
+const ALL_COUNCIL_IDS: CanonicalRealmId[] = [
   'mathematics',
   'computerScience',
   'physics',
@@ -65,7 +65,7 @@ export const ConvergenceBattleScreen: React.FC<ConvergenceBattleScreenProps> = (
   const [actionStartTime, setActionStartTime] = useState<number>(Date.now());
 
   const currentTrial = trials[currentTrialIndex] || trials[0];
-  const primaryBoss = BOSS_COUNCIL_MEMBERS[currentTrial.primaryBoss];
+  const primaryBoss = BOSS_COUNCIL_MEMBERS[currentTrial.primaryBoss as CanonicalRealmId] || BOSS_COUNCIL_MEMBERS.mathematics;
 
   // Set initial boss intro dialogue on trial change
   useEffect(() => {

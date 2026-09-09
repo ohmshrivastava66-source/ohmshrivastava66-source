@@ -405,6 +405,64 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Semantic Overlord',
   },
+  data_structures_algorithms: {
+    id: 'mirror_dsa_boss',
+    subject: 'data_structures_algorithms',
+    baseBossId: 'dsa_boss',
+    mirrorName: 'The Mirror of the Asymptotic Sovereign',
+    mirrorTitle: 'Specter of Complexity Bounds',
+    corruptedConcept: 'Tight Asymptotic Bounds & Amortized Invariants',
+    dialogueIntro:
+      'The memory space reflects infinitely: "You analyzed worst-case bounds. But do you comprehend potential functions and amortized truth?"',
+    dialogueVictory:
+      'The mirror recurses to base case: "You hold the master theorem and loop invariant with unyielding proof."',
+    dialogueDefeat:
+      'The stack overflows: "The mirror fades. Your recurrences collapsed under unverified assumptions."',
+    targetedWeakness: 'Amortized Analysis & Recurrence Relations',
+    scenario:
+      'A student claims that dynamic array doubling takes O(N²) time for inserting N items because doubling takes O(k) copy time whenever capacity is exceeded.',
+    objective:
+      'Synthesize aggregate analysis and potential method to deduce true amortized cost per append operation.',
+    options: [
+      {
+        id: 'opt_m_dsa_a',
+        label:
+          'A. The claim is incorrect: total copying cost over N insertions is Σ 2^i < 2N = O(N), yielding amortized O(1) time per append.',
+        isCorrect: true,
+        rationale:
+          'Doubling occurs only at powers of 2. Summing 1 + 2 + 4 + ... + N/2 + N is a geometric series bounded by 2N. Averaged over N appends, each append has O(1) amortized cost.',
+      },
+      {
+        id: 'opt_m_dsa_b',
+        label:
+          'B. The claim is correct: because worst-case single insert is O(N), all N inserts compound to O(N²).',
+        isCorrect: false,
+        rationale:
+          'Conflating single-operation worst-case with aggregate amortized sequence bound.',
+      },
+      {
+        id: 'opt_m_dsa_c',
+        label:
+          'C. Amortized cost is O(log N) because the capacity doubles logarithmically.',
+        isCorrect: false,
+        rationale:
+          'While doubling occurs log N times, the total amortized cost per item is constant O(1).',
+      },
+      {
+        id: 'opt_m_dsa_d',
+        label:
+          'D. Dynamic arrays require pre-allocated infinite memory to avoid reallocation penalties.',
+        isCorrect: false,
+        rationale:
+          'Infinite memory is physically impossible and unnecessary under geometric resizing.',
+      },
+    ],
+    correctExplanation:
+      'Using the accounting/aggregate method, each inserted element pays 3 tokens: 1 for its own insertion, 1 for its future copy, and 1 to copy an older element. The aggregate cost is O(N), giving amortized O(1).',
+    echoVaultId: 'dsa_echo_vault',
+    rewardXp: 150,
+    mirrorMark: 'Mirror Mark of the Asymptotic Sovereign',
+  },
 };
 
 export class MirrorBossEngine {
@@ -445,7 +503,8 @@ export class MirrorBossEngine {
     if (!mirrorDef) return { shouldTrigger: false, probability: 0 };
 
     // Condition 1: Player must have defeated the original realm boss
-    const requiredBossLevel = REALM_BOSS_LEVELS[subject];
+    const requiredBossLevel = (REALM_BOSS_LEVELS as Record<string, number>)[subject];
+    if (!requiredBossLevel) return { shouldTrigger: false, probability: 0 };
     const clearedLevels = profile.clearedLevels?.[subject] || [];
     if (!clearedLevels.includes(requiredBossLevel)) {
       return { shouldTrigger: false, probability: 0 }; // original boss not cleared yet!

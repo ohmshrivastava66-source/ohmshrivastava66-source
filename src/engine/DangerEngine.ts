@@ -278,6 +278,10 @@ export class DangerEngine {
         name: 'Anomaly: Recursive Memory Breach',
         warning: 'An uncontained thread leaks into memory! The enemy harnesses dynamic pressure.',
       },
+      data_structures_algorithms: {
+        name: 'Anomaly: Asymptotic Divergence',
+        warning: 'Unbounded recursive branches destabilize heap memory! The adversary accelerates time complexity.',
+      },
       physics: {
         name: 'Cosmic Anomaly: Gravitational Shear',
         warning: 'A spatial rift warps kinetic momentum on the battlefield.',
@@ -398,6 +402,10 @@ export class DangerEngine {
       computerScience: [
         { id: 'cs_sorting_invariants', name: 'Sorting & State Invariants' },
         { id: 'cs_memoization', name: 'Dynamic Programming & Caching' },
+      ],
+      data_structures_algorithms: [
+        { id: 'dsa_asymptotic_analysis', name: 'Asymptotic Bounds & Recurrences' },
+        { id: 'dsa_tree_balance', name: 'Balanced Trees & Graph Traversal' },
       ],
       physics: [
         { id: 'phys_force_acceleration', name: 'Kinematics & Force Vectors' },

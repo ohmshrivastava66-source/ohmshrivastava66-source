@@ -25,7 +25,7 @@ export type AppScreen =
   | 'LAST_QUESTION'
   | 'TRUE_ENDING';
 
-export type SubjectId =
+export type CanonicalRealmId =
   | 'mathematics'
   | 'computerScience'
   | 'physics'
@@ -34,6 +34,39 @@ export type SubjectId =
   | 'history'
   | 'geography'
   | 'language';
+
+export type SubjectId =
+  | CanonicalRealmId
+  | 'data_structures_algorithms';
+
+export type KingdomId =
+  | 'primary_academy'
+  | 'middle_spire'
+  | 'secondary_bastion'
+  | 'higher_sanctuary'
+  | 'undergraduate_forge'
+  | 'archon_observatory';
+
+export type ClassId =
+  | 'class_1'
+  | 'class_2'
+  | 'class_3'
+  | 'class_4'
+  | 'class_5'
+  | 'class_6'
+  | 'class_7'
+  | 'class_8'
+  | 'class_9'
+  | 'class_10'
+  | 'class_11'
+  | 'class_12'
+  | 'undergraduate_year_1'
+  | 'undergraduate_year_2'
+  | 'undergraduate_year_3'
+  | 'undergraduate_year_4'
+  | 'archon_research_1'
+  | 'archon_research_2'
+  | 'legacy_tier';
 
 export type EducationLevelId =
   | 'class_1_5'

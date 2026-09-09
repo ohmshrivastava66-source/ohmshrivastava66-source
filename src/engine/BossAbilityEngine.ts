@@ -400,6 +400,405 @@ export class BossAbilityEngine {
       phaseRequirement: 3,
       flavorText: 'The Sphinx demands intellectual proof over brute force!',
     },
+
+    // -------------------------------------------------------------
+    // 10. DATA STRUCTURES & ALGORITHMS — ASYMPTOTIC COLOSSUS (Module 1 Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'colossus_watershed_distortion',
+      name: 'Watershed Distortion',
+      category: 'DISTORTION',
+      bossIdentifier: 'asymptotic_colossus',
+      description: 'The Colossus bends recurrence branches, shifting card focus.',
+      phaseRequirement: 2,
+      flavorText: 'The watershed boundary ripples between polynomial powers.',
+    },
+    {
+      id: 'colossus_polylog_shroud',
+      name: 'Polylog Shroud',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'asymptotic_colossus',
+      description: 'Envelops an alternative decomposition path in asymptotic mist.',
+      phaseRequirement: 2,
+      flavorText: 'Higher-order logarithmic terms obscure the alternative path.',
+    },
+    {
+      id: 'colossus_stack_drain',
+      name: 'Recurrence Depth Drain',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'asymptotic_colossus',
+      description: 'Deep recursion levels increase non-critical action cost by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'Recurrence depth drains mental energy for auxiliary steps.',
+    },
+    {
+      id: 'colossus_complexity_barrier',
+      name: 'Complexity Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'asymptotic_colossus',
+      description: 'A crystalline barrier of asymptotic lower-bounds.',
+      phaseRequirement: 3,
+      flavorText: 'The Asymptotic Colossus hardens behind a tight complexity barrier!',
+    },
+    {
+      id: 'colossus_asymptotic_countersign',
+      name: 'Asymptotic Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'asymptotic_colossus',
+      description: 'Retaliates with an adaptive complexity ward upon being struck.',
+      phaseRequirement: 2,
+      flavorText: 'The Colossus tallies your derivation and hardens its core.',
+    },
+
+    // -------------------------------------------------------------
+    // 11. DATA STRUCTURES & ALGORITHMS — IMBALANCE GOLEM (Module 2 Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'golem_balance_distortion',
+      name: 'Balance Distortion',
+      category: 'DISTORTION',
+      bossIdentifier: 'imbalance_golem',
+      description: 'The Imbalance Golem twists subtree heights, shifting card focus.',
+      phaseRequirement: 2,
+      flavorText: 'Height factors skew wildly as stone branches tremble.',
+    },
+    {
+      id: 'golem_node_shroud',
+      name: 'Crystalline Node Shroud',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'imbalance_golem',
+      description: 'Envelops an alternative rotation or search path in mineral fog.',
+      phaseRequirement: 2,
+      flavorText: 'Dense quartz mist obscures an alternative rotation path.',
+    },
+    {
+      id: 'golem_collision_pressure',
+      name: 'Structural Friction',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'imbalance_golem',
+      description: 'Severe structural imbalance increases non-critical operation cost by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'Frictional stress in the unbalanced tree drains mental energy.',
+    },
+    {
+      id: 'golem_equilibrium_aegis',
+      name: 'Equilibrium Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'imbalance_golem',
+      description: 'A fortified wall of dense granite absorbing direct strikes.',
+      phaseRequirement: 3,
+      flavorText: 'The Imbalance Golem hardens its core behind the Equilibrium Aegis!',
+    },
+    {
+      id: 'golem_structural_countersign',
+      name: 'Structural Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'imbalance_golem',
+      description: 'Retaliates with an adaptive stone barrier upon correct balance proof.',
+      phaseRequirement: 2,
+      flavorText: 'The Golem detects your balancing pivot and reinforces its foundation.',
+    },
+    // -------------------------------------------------------------
+    // 12. DATA STRUCTURES & ALGORITHMS — VAEL, STRATEGY WARDEN (Module 3 Mini-Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'vael_paradigm_fracture',
+      name: 'Paradigm Fracture',
+      category: 'FRACTURED_STATE',
+      bossIdentifier: 'vael_strategy_warden',
+      description: 'Fractures the algorithmic paradigm, distorting auxiliary state projections.',
+      phaseRequirement: 2,
+      flavorText: 'Contrasting paradigms collide, refracting the decision surface.',
+    },
+    {
+      id: 'vael_strategy_shroud',
+      name: 'Strategy Shroud',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'vael_strategy_warden',
+      description: 'Envelops an alternative algorithmic pathway in strategic mist.',
+      phaseRequirement: 2,
+      flavorText: 'Dense mist conceals an alternative exploration path.',
+    },
+    {
+      id: 'vael_decision_pressure',
+      name: 'Decision Pressure',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'vael_strategy_warden',
+      description: 'Intense algorithmic trade-offs increase non-critical action cost by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'The cognitive burden of contrasting paradigms drains focus.',
+    },
+    {
+      id: 'vael_warden_aegis',
+      name: 'Warden\'s Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'vael_strategy_warden',
+      description: 'A resolute barrier forged from algorithmic synthesis bounds.',
+      phaseRequirement: 3,
+      flavorText: 'Vael summons the Warden\'s Aegis, demanding optimal paradigm choice!',
+    },
+    {
+      id: 'vael_tactical_countersign',
+      name: 'Tactical Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'vael_strategy_warden',
+      description: 'Retaliates with an adaptive paradigm ward upon being struck.',
+      phaseRequirement: 2,
+      flavorText: 'Vael counters by demanding rigorous proof of optimality.',
+    },
+
+    // -------------------------------------------------------------
+    // 13. DATA STRUCTURES & ALGORITHMS — ENTROPY PARTITIONER (Module 3 Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'entropy_partition_warp',
+      name: 'Partition Distortion',
+      category: 'DISTORTION',
+      bossIdentifier: 'entropy_partitioner',
+      description: 'The Partitioner warps subset boundaries, shifting card focus.',
+      phaseRequirement: 2,
+      flavorText: 'Partition boundaries vibrate between disconnected subgraphs.',
+    },
+    {
+      id: 'entropy_cycle_shroud',
+      name: 'Cycle Shroud',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'entropy_partitioner',
+      description: 'Envelops an alternative spanning cut in turbulent cycle mist.',
+      phaseRequirement: 2,
+      flavorText: 'Turbulent cyclic noise obscures an alternative cut edge.',
+    },
+    {
+      id: 'entropy_spanning_drain',
+      name: 'Spanning Tension Drain',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'entropy_partitioner',
+      description: 'High graph cut tension increases non-critical operation cost by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'Edge tension across graph partitions drains mental stamina.',
+    },
+    {
+      id: 'entropy_barrier_aegis',
+      name: 'Minimal Spanning Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'entropy_partitioner',
+      description: 'A crystalline lattice of minimum-weight edges absorbing direct force.',
+      phaseRequirement: 3,
+      flavorText: 'The Entropy Partitioner fortifies its core behind a Minimal Spanning Aegis!',
+    },
+    {
+      id: 'entropy_cut_countersign',
+      name: 'Cut Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'entropy_partitioner',
+      description: 'Retaliates with an adaptive cut barrier upon correct edge selection.',
+      phaseRequirement: 2,
+      flavorText: 'The Partitioner detects cut crossing and reinforces opposing vertices.',
+    },
+
+    // -------------------------------------------------------------
+    // 14. DATA STRUCTURES & ALGORITHMS — THE METRIC ARBITER (Module 4 Mini-Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'arbiter_matrix_distortion',
+      name: 'Matrix Distortion',
+      category: 'DISTORTION',
+      bossIdentifier: 'metric_arbiter',
+      description: 'The Arbiter warps the all-pairs distance matrix, shifting card alignments.',
+      phaseRequirement: 2,
+      flavorText: 'Intermediate distance coordinates warp between non-Euclidean geodesics.',
+    },
+    {
+      id: 'arbiter_pivot_shroud',
+      name: 'Pivot Shroud',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'metric_arbiter',
+      description: 'Envelops an alternative intermediate vertex path in metric mist.',
+      phaseRequirement: 2,
+      flavorText: 'Thick fog cloaks an alternative intermediate vertex relaxation.',
+    },
+    {
+      id: 'arbiter_path_tension',
+      name: 'Path Tension Drain',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'metric_arbiter',
+      description: 'Dense all-pairs metric tensions increase non-critical action cost by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'Evaluating all-pairs intermediate routes drains cognitive focus.',
+    },
+    {
+      id: 'arbiter_all_pairs_aegis',
+      name: 'All-Pairs Geodesic Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'metric_arbiter',
+      description: 'An impenetrable shield forged from the complete all-pairs distance matrix.',
+      phaseRequirement: 3,
+      flavorText: 'The Metric Arbiter establishes the All-Pairs Geodesic Aegis!',
+    },
+    {
+      id: 'arbiter_triangle_countersign',
+      name: 'Triangle Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'metric_arbiter',
+      description: 'Retaliates with an adaptive metric ward upon correct relaxation.',
+      phaseRequirement: 2,
+      flavorText: 'The Arbiter reinforces intermediate vertex paths with metric tension.',
+    },
+
+    // -------------------------------------------------------------
+    // 15. DATA STRUCTURES & ALGORITHMS — GEODESIC SOVEREIGN (Module 4 Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'geodesic_subproblem_collapse',
+      name: 'Subproblem Collapse',
+      category: 'FRACTURED_STATE',
+      bossIdentifier: 'geodesic_sovereign',
+      description: 'The Sovereign fractures DP subproblem states, distorting visual projections.',
+      phaseRequirement: 2,
+      flavorText: 'Overlapping subproblem states oscillate violently across the table.',
+    },
+    {
+      id: 'geodesic_optimal_shroud',
+      name: 'Optimal Path Shroud',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'geodesic_sovereign',
+      description: 'Veils an alternative branch in the decision space in dense shadows.',
+      phaseRequirement: 2,
+      flavorText: 'Shadows obscure an alternative dynamic programming transition.',
+    },
+    {
+      id: 'geodesic_state_drain',
+      name: 'State Space Drain',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'geodesic_sovereign',
+      description: 'High dimensional state space complexity increases non-critical operation cost by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'The weight of multi-dimensional DP tables drains mental stamina.',
+    },
+    {
+      id: 'geodesic_sovereign_aegis',
+      name: 'Sovereign Optimization Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'geodesic_sovereign',
+      description: 'A crystalline shield forged from global optimal substructure bounds.',
+      phaseRequirement: 3,
+      flavorText: 'The Geodesic Sovereign summons the Sovereign Optimization Aegis!',
+    },
+    {
+      id: 'geodesic_bellman_countersign',
+      name: 'Bellman Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'geodesic_sovereign',
+      description: 'Retaliates with an adaptive optimality ward upon being struck by correct steps.',
+      phaseRequirement: 2,
+      flavorText: 'The Sovereign counters by demanding rigorous proof of subproblem optimality.',
+    },
+
+    // -------------------------------------------------------------
+    // 16. DATA STRUCTURES & ALGORITHMS — INTRACTABILITY SOVEREIGN (Level 50 Mini-Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'intractability_inversion_ward',
+      name: 'Directional Inversion Ward',
+      category: 'DISTORTION',
+      bossIdentifier: 'intractability_sovereign',
+      description: 'Distorts reduction mappings, demanding rigorous certificate verification.',
+      phaseRequirement: 2,
+      flavorText: 'The Sovereign attempts to invert the reduction conduit!',
+    },
+    {
+      id: 'intractability_gadget_shroud',
+      name: 'Combinatorial Gadget Shroud',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'intractability_sovereign',
+      description: 'Enshrouds an alternative reduction branch in combinatorial shadow.',
+      phaseRequirement: 2,
+      flavorText: 'Clause gadgets are shrouded in exponential ambiguity.',
+    },
+    {
+      id: 'intractability_certificate_drain',
+      name: 'Certificate Entropy Drain',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'intractability_sovereign',
+      description: 'Verification witness checking increases non-critical card costs by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'Checking complex certificates drains mental energy.',
+    },
+    {
+      id: 'intractability_sovereign_aegis',
+      name: 'Sovereign Intractability Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'intractability_sovereign',
+      description: 'An impenetrable shield forged from the complete polynomial reduction chain.',
+      phaseRequirement: 3,
+      flavorText: 'The Intractability Sovereign erects the Sovereign Intractability Aegis!',
+    },
+    {
+      id: 'intractability_witness_countersign',
+      name: 'Witness Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'intractability_sovereign',
+      description: 'Retaliates with an adaptive verification ward upon being struck by correct steps.',
+      phaseRequirement: 2,
+      flavorText: 'The Sovereign demands immediate verification of the certificate invariant.',
+    },
+
+    // -------------------------------------------------------------
+    // 17. DATA STRUCTURES & ALGORITHMS — THE TURING ARCHON (Level 54 Final Boss)
+    // -------------------------------------------------------------
+    {
+      id: 'dsa_turing_witness_horizon',
+      name: 'Witness Horizon',
+      category: 'FRACTURED_STATE',
+      bossIdentifier: 'dsa_turing_archon',
+      description: 'The Archon distorts deterministic polynomial bounds with non-deterministic fog.',
+      phaseRequirement: 2,
+      flavorText: 'Non-deterministic branches obscure the deterministic polynomial boundary.',
+    },
+    {
+      id: 'dsa_turing_reduction_paradox',
+      name: 'Reduction Paradox',
+      category: 'CARD_SHROUD',
+      bossIdentifier: 'dsa_turing_archon',
+      description: 'Veils alternative reduction gadget choices in recursive shadows.',
+      phaseRequirement: 2,
+      flavorText: 'Shadows envelop an alternative graph gadget mapping.',
+    },
+    {
+      id: 'dsa_turing_approximation_drain',
+      name: 'Intractability Mists Drain',
+      category: 'ENERGY_DRAIN',
+      bossIdentifier: 'dsa_turing_archon',
+      description: 'Worst-case metric intractability increases non-critical card costs by +1.',
+      phaseRequirement: 3,
+      costIncrease: 1,
+      flavorText: 'The mists of combinatorial explosion sap cognitive focus.',
+    },
+    {
+      id: 'dsa_turing_abyssal_aegis',
+      name: 'Abyssal Complexity Aegis',
+      category: 'GUARDIAN_PHASE',
+      bossIdentifier: 'dsa_turing_archon',
+      description: 'The ultimate shield of the Algorithmic Abyss, shattered only by verified approximation bounds.',
+      phaseRequirement: 3,
+      flavorText: 'The Turing Archon calls forth the Abyssal Complexity Aegis!',
+    },
+    {
+      id: 'dsa_turing_metric_countersign',
+      name: 'Metric Shortcut Countersign',
+      category: 'COUNTERSIGN',
+      bossIdentifier: 'dsa_turing_archon',
+      description: 'Retaliates with an adaptive triangle-inequality ward upon correct step execution.',
+      phaseRequirement: 2,
+      flavorText: 'The Archon tests whether your tour truly obeys the metric invariant.',
+    },
   ];
 
   public static getInstance(): BossAbilityEngine {
@@ -407,6 +806,10 @@ export class BossAbilityEngine {
       BossAbilityEngine.instance = new BossAbilityEngine();
     }
     return BossAbilityEngine.instance;
+  }
+
+  public getAbilitiesForBoss(bossId: string): ThemedBossAbility[] {
+    return this.abilities.filter(a => a.bossIdentifier === bossId);
   }
 
   /**
@@ -418,6 +821,30 @@ export class BossAbilityEngine {
     const title = (encounter.enemy.title || '').toLowerCase();
     const subj = encounter.subject;
 
+    if ((name.includes('entropy') && subj === 'data_structures_algorithms') || (subj === 'data_structures_algorithms' && encounter.id.includes('m3_10'))) {
+      return 'entropy_partitioner';
+    }
+    if ((name.includes('intractability') || encounter.id.includes('m5_06')) && subj === 'data_structures_algorithms') {
+      return 'intractability_sovereign';
+    }
+    if ((name.includes('turing') || encounter.id.includes('m5_10') || encounter.id === 'dsa_boss') && subj === 'data_structures_algorithms') {
+      return 'dsa_turing_archon';
+    }
+    if ((name.includes('metric') || encounter.id.includes('m4_09')) && subj === 'data_structures_algorithms') {
+      return 'metric_arbiter';
+    }
+    if ((name.includes('geodesic') || encounter.id.includes('m4_10')) && subj === 'data_structures_algorithms' && !name.includes('sentinel')) {
+      return 'geodesic_sovereign';
+    }
+    if ((name.includes('vael') || title.includes('strategy') || name.includes('warden')) && subj === 'data_structures_algorithms') {
+      return 'vael_strategy_warden';
+    }
+    if (name.includes('imbalance') || visual.includes('imbalance') || (name.includes('golem') && subj === 'data_structures_algorithms') || (subj === 'data_structures_algorithms' && encounter.id.includes('m2_14'))) {
+      return 'imbalance_golem';
+    }
+    if (name.includes('asymptotic') || visual.includes('asymptotic') || (subj === 'data_structures_algorithms' && encounter.id.includes('m1_10'))) {
+      return 'asymptotic_colossus';
+    }
     if (visual.includes('singularity') || title.includes('archon') || name.includes('archon')) {
       return subj === 'computerScience' ? 'turing_archon' : 'singularity_archon';
     }
@@ -482,7 +909,7 @@ export class BossAbilityEngine {
     // Only active for Boss encounters
     const isBossFight =
       encounter.isBoss ||
-      encounter.levelNumber === 5 ||
+      (encounter.subject !== 'data_structures_algorithms' && encounter.levelNumber === 5) ||
       encounter.id.includes('boss');
     if (!isBossFight) {
       return {

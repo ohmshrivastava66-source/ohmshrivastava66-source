@@ -1,4 +1,4 @@
-import { SubjectId } from './types/game';
+import { SubjectId, CanonicalRealmId } from './types/game';
 import { PlayerProfile } from './types/telemetry';
 import { StorageManager } from './persistence/StorageManager';
 import {
@@ -142,7 +142,7 @@ assert(allUnlock1 && allUnlock2, 2, 'hasDefeatedAllRealmBosses returns true stri
 // -------------------------------------------------------------
 // TEST 3: Secrecy: World Map nodes, UI bars, and Level selectors do NOT reveal Convergence before unlock
 // -------------------------------------------------------------
-const allSubjectKeys = Object.keys(REALM_BOSS_LEVELS) as SubjectId[];
+const allSubjectKeys = Object.keys(REALM_BOSS_LEVELS) as CanonicalRealmId[];
 let mapRevealsConvergence = false;
 for (const subj of allSubjectKeys) {
   const encounters = ENCOUNTERS_MAP[subj] || [];
@@ -176,7 +176,7 @@ assert(Boolean(!normalFalseEnding && !incompleteFalseEnding && completeFalseEndi
 // -------------------------------------------------------------
 // TEST 5: Boss Council presence: All 8 realm bosses are present with correct domain identifiers and titles
 // -------------------------------------------------------------
-const councilIds = Object.keys(BOSS_COUNCIL_MEMBERS) as SubjectId[];
+const councilIds = Object.keys(BOSS_COUNCIL_MEMBERS) as CanonicalRealmId[];
 const hasAll8Bosses = allSubjectKeys.every(s => councilIds.includes(s));
 const allHaveEmblems = allSubjectKeys.every(s => !!BOSS_COUNCIL_MEMBERS[s].emblem && !!BOSS_COUNCIL_MEMBERS[s].domain);
 assert(hasAll8Bosses && allHaveEmblems && councilIds.length === 8, 5, 'All 8 realm bosses exist in council with valid domain, title, and emblem');
@@ -368,7 +368,7 @@ const postDefeatProfile = StorageManager.loadProfile();
 const xpPreserved = postDefeatProfile.xp === preDefeatProfile.xp;
 const cardsPreserved = postDefeatProfile.unlockedCardIds.length === preDefeatProfile.unlockedCardIds.length;
 const clearedPreserved = Object.keys(preDefeatProfile.clearedLevels).every(
-  k => postDefeatProfile.clearedLevels[k as SubjectId].length === preDefeatProfile.clearedLevels[k as SubjectId].length
+  k => (postDefeatProfile.clearedLevels[k as CanonicalRealmId] || []).length === (preDefeatProfile.clearedLevels[k as CanonicalRealmId] || []).length
 );
 assert(xpPreserved && cardsPreserved && clearedPreserved, 16, 'Zero progress loss upon Convergence defeat (XP, cards, and cleared levels 100% preserved)');
 

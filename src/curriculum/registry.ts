@@ -2,6 +2,9 @@ import { SubjectId, Card } from '../types/game';
 import { SubjectInfo, EncounterDefinition, EchoDungeonDefinition } from '../types/curriculum';
 import { MATHEMATICS_SUBJECT_INFO, MATH_ENCOUNTERS, MATH_ECHO_VAULT, MATH_STARTER_CARDS } from './mathematics';
 import { CS_SUBJECT_INFO, CS_ENCOUNTERS, CS_ECHO_VAULT, CS_STARTER_CARDS } from './computerScience';
+import { DSA_SUBJECT_INFO, DSA_ENCOUNTERS, DSA_STARTER_CARDS, DSA_ECHO_VAULT, DSA_ROTATIONS_ECHO_VAULT, DSA_STRATEGY_ECHO_VAULT, DSA_OPTIMIZATION_ECHO_VAULT, DSA_COMPLEXITY_ECHO_VAULT } from './dataStructuresAlgorithms';
+
+export * from './educationHierarchy';
 
 export interface EducationTier {
   id: string;
@@ -235,6 +238,7 @@ const LANGUAGE_SUBJECT_INFO: SubjectInfo = {
 export const ALL_SUBJECTS: Record<SubjectId, SubjectInfo> = {
   mathematics: MATHEMATICS_SUBJECT_INFO,
   computerScience: CS_SUBJECT_INFO,
+  data_structures_algorithms: DSA_SUBJECT_INFO,
   physics: PHYSICS_SUBJECT_INFO,
   chemistry: CHEMISTRY_SUBJECT_INFO,
   biology: BIOLOGY_SUBJECT_INFO,
@@ -247,6 +251,7 @@ export const ALL_SUBJECTS: Record<SubjectId, SubjectInfo> = {
 export const ENCOUNTERS_MAP: Record<SubjectId, EncounterDefinition[]> = {
   mathematics: MATH_ENCOUNTERS,
   computerScience: CS_ENCOUNTERS,
+  data_structures_algorithms: DSA_ENCOUNTERS,
   physics: [
     {
       id: 'phys_lvl_1',
@@ -432,12 +437,18 @@ export const ENCOUNTERS_MAP: Record<SubjectId, EncounterDefinition[]> = {
 export const ECHO_VAULTS_MAP: Record<string, EchoDungeonDefinition> = {
   vault_factorization: MATH_ECHO_VAULT,
   vault_cs_invariants: CS_ECHO_VAULT,
+  vault_dsa_asymptotics: DSA_ECHO_VAULT,
+  vault_dsa_rotations: DSA_ROTATIONS_ECHO_VAULT,
+  vault_dsa_strategy: DSA_STRATEGY_ECHO_VAULT,
+  vault_dsa_optimization: DSA_OPTIMIZATION_ECHO_VAULT,
+  vault_dsa_complexity: DSA_COMPLEXITY_ECHO_VAULT,
 };
 
 /* STARTER CARDS MAP */
 export const STARTER_CARDS_MAP: Record<SubjectId, Card[]> = {
   mathematics: MATH_STARTER_CARDS,
   computerScience: CS_STARTER_CARDS,
+  data_structures_algorithms: DSA_STARTER_CARDS,
   physics: ENCOUNTERS_MAP.physics[0].validCards,
   chemistry: ENCOUNTERS_MAP.chemistry[0].validCards,
   biology: ENCOUNTERS_MAP.biology[0].validCards,

@@ -27,6 +27,7 @@ const DEFAULT_PROFILE: PlayerProfile = {
   subjectMastery: {
     mathematics: 0,
     computerScience: 0,
+    data_structures_algorithms: 0,
     physics: 0,
     chemistry: 0,
     biology: 0,
@@ -37,6 +38,7 @@ const DEFAULT_PROFILE: PlayerProfile = {
   clearedLevels: {
     mathematics: [],
     computerScience: [],
+    data_structures_algorithms: [],
     physics: [],
     chemistry: [],
     biology: [],
@@ -47,6 +49,7 @@ const DEFAULT_PROFILE: PlayerProfile = {
   clearedHiddenTrials: {
     mathematics: [],
     computerScience: [],
+    data_structures_algorithms: [],
     physics: [],
     chemistry: [],
     biology: [],
@@ -64,6 +67,9 @@ const DEFAULT_PROFILE: PlayerProfile = {
   weaknesses: [],
   runHistory: [],
   activeEducationLevel: 'class_9_10',
+  activeKingdom: 'secondary_bastion',
+  activeClass: 'legacy_tier',
+  contextProgress: {},
   conceptPerformance: {},
   dangerCooldownBattles: 0,
   surpriseAttackCooldownBattles: 0,
@@ -87,6 +93,10 @@ let inMemoryProfile: PlayerProfile | null = null;
 let inMemorySettings: GameSettings | null = null;
 
 export class StorageManager {
+  public static createInitialProfile(): PlayerProfile {
+    return JSON.parse(JSON.stringify(DEFAULT_PROFILE));
+  }
+
   public static loadProfile(): PlayerProfile {
     try {
       if (typeof localStorage !== 'undefined') {
@@ -135,6 +145,9 @@ export class StorageManager {
             convergenceBestScore: parsed.convergenceBestScore ?? 0,
             convergenceCompletedAt: parsed.convergenceCompletedAt,
             convergenceAttempts: parsed.convergenceAttempts ?? 0,
+            activeKingdom: parsed.activeKingdom ?? 'secondary_bastion',
+            activeClass: parsed.activeClass ?? 'legacy_tier',
+            contextProgress: parsed.contextProgress ?? {},
             learningDNA: parsed.learningDNA ? { ...DEFAULT_LEARNING_DNA, ...parsed.learningDNA } : { ...DEFAULT_LEARNING_DNA },
             observerState: parsed.observerState ? { ...DEFAULT_OBSERVER_STATE, ...parsed.observerState } : { ...DEFAULT_OBSERVER_STATE },
             mirrorBossState: parsed.mirrorBossState ? { ...DEFAULT_MIRROR_STATE, ...parsed.mirrorBossState } : { ...DEFAULT_MIRROR_STATE },
@@ -226,6 +239,20 @@ export class StorageManager {
     if (!currentCleared.includes(levelNumber)) {
       profile.clearedLevels[subject] = [...currentCleared, levelNumber].sort((a, b) => a - b);
     }
+
+    // Context-isolated progress tracking
+    const activeK = profile.activeKingdom || 'secondary_bastion';
+    const activeC = profile.activeClass || 'legacy_tier';
+    const ctxProgress = this.getContextProgress(profile, activeK, activeC, subject);
+    if (!ctxProgress.clearedLevels.includes(levelNumber)) {
+      ctxProgress.clearedLevels.push(levelNumber);
+      ctxProgress.clearedLevels.sort((a, b) => a - b);
+    }
+    ctxProgress.mastery = Math.min(100, ctxProgress.mastery + masteryGained);
+
+    if (!profile.contextProgress) profile.contextProgress = {};
+    const ctxKey = this.getContextKey(activeK, activeC, subject);
+    profile.contextProgress[ctxKey] = ctxProgress;
 
     // Unlock Card
     if (unlockedCardId && !profile.unlockedCardIds.includes(unlockedCardId)) {
@@ -586,21 +613,136 @@ export class StorageManager {
     return profile;
   }
 
+  public static getContextKey(
+    kingdomId: string = 'secondary_bastion',
+    classId: string = 'legacy_tier',
+    subjectId: SubjectId = 'mathematics'
+  ): string {
+    return `${kingdomId}:${classId}:${subjectId}`;
+  }
+
+  public static getContextProgress(
+    profile: PlayerProfile,
+    kingdomId?: string,
+    classId?: string,
+    subjectId: SubjectId = 'mathematics'
+  ): { mastery: number; clearedLevels: number[]; clearedHiddenTrials: string[] } {
+    const k = kingdomId || profile.activeKingdom || 'secondary_bastion';
+    const c = classId || profile.activeClass || 'legacy_tier';
+    const key = this.getContextKey(k, c, subjectId);
+
+    if (profile.contextProgress && profile.contextProgress[key]) {
+      return {
+        mastery: profile.contextProgress[key].mastery ?? 0,
+        clearedLevels: profile.contextProgress[key].clearedLevels ?? [],
+        clearedHiddenTrials: profile.contextProgress[key].clearedHiddenTrials ?? [],
+      };
+    }
+
+    // Safe legacy fallback: if in legacy context, return existing root progress
+    if (c === 'legacy_tier') {
+      return {
+        mastery: profile.subjectMastery[subjectId] ?? 0,
+        clearedLevels: profile.clearedLevels[subjectId] ?? [],
+        clearedHiddenTrials: profile.clearedHiddenTrials?.[subjectId] ?? [],
+      };
+    }
+
+    // Clean isolated progression for unplayed classes
+    return {
+      mastery: 0,
+      clearedLevels: [],
+      clearedHiddenTrials: [],
+    };
+  }
+
+  public static saveContextProgress(
+    profile: PlayerProfile,
+    kingdomId: string,
+    classId: string,
+    subjectId: SubjectId,
+    progress: { mastery: number; clearedLevels: number[]; clearedHiddenTrials?: string[] }
+  ): PlayerProfile {
+    if (!profile.contextProgress) {
+      profile.contextProgress = {};
+    }
+    const key = this.getContextKey(kingdomId, classId, subjectId);
+    profile.contextProgress[key] = {
+      mastery: Math.min(100, progress.mastery),
+      clearedLevels: [...progress.clearedLevels].sort((a, b) => a - b),
+      clearedHiddenTrials: progress.clearedHiddenTrials ? [...progress.clearedHiddenTrials] : [],
+    };
+
+    // Keep active root subjectMastery/clearedLevels in sync for backward compatibility
+    const activeK = profile.activeKingdom || 'secondary_bastion';
+    const activeC = profile.activeClass || 'legacy_tier';
+    if (activeK === kingdomId && activeC === classId) {
+      profile.subjectMastery[subjectId] = profile.contextProgress[key].mastery;
+      if (!profile.clearedHiddenTrials && DEFAULT_PROFILE.clearedHiddenTrials) {
+        profile.clearedHiddenTrials = { ...DEFAULT_PROFILE.clearedHiddenTrials };
+      }
+      if (profile.clearedHiddenTrials) {
+        profile.clearedHiddenTrials[subjectId] = [...profile.contextProgress[key].clearedHiddenTrials!];
+      }
+    }
+
+    this.saveProfile(profile);
+    return profile;
+  }
+
+  public static setActiveKingdomAndClass(
+    kingdomId: string,
+    classId: string
+  ): PlayerProfile {
+    const profile = this.loadProfile();
+    profile.activeKingdom = kingdomId;
+    profile.activeClass = classId;
+    this.saveProfile(profile);
+    return profile;
+  }
+
   public static isLevelUnlocked(
     subject: SubjectId,
     levelIdentifier: number | string,
-    profileOverride?: PlayerProfile
+    profileOverride?: PlayerProfile,
+    contextClassId?: string,
+    contextKingdomId?: string
   ): boolean {
     const profile = profileOverride || this.loadProfile();
-    const cleared = profile.clearedLevels[subject] || [];
-    const clearedTrials = profile.clearedHiddenTrials?.[subject] || [];
+    const activeKingdom = contextKingdomId || profile.activeKingdom || 'secondary_bastion';
+    const activeClass = contextClassId || profile.activeClass || 'legacy_tier';
+    const ctxProgress = this.getContextProgress(profile, activeKingdom, activeClass, subject);
+    const cleared = ctxProgress.clearedLevels;
+    const clearedTrials = ctxProgress.clearedHiddenTrials;
 
     // String identifier checks
     if (typeof levelIdentifier === 'string') {
-      if (levelIdentifier.endsWith('_lvl_1')) return true;
+      if (levelIdentifier === 'dsa_m1_01' || levelIdentifier.endsWith('_lvl_1')) return true;
+
+      // Modular encounter pattern (e.g., dsa_m1_01 -> 1, dsa_m2_01 -> 11, etc.)
+      const modMatch = levelIdentifier.match(/_m(\d+)_(\d+)/);
+      if (modMatch) {
+        const modNum = parseInt(modMatch[1], 10);
+        const seqNum = parseInt(modMatch[2], 10);
+        let lvlNum = seqNum;
+        if (modNum === 1) lvlNum = seqNum;
+        else if (modNum === 2) lvlNum = 10 + seqNum;
+        else if (modNum === 3) lvlNum = 24 + seqNum;
+        else if (modNum === 4) lvlNum = 34 + seqNum;
+        else if (modNum === 5) lvlNum = 44 + seqNum;
+
+        if (lvlNum === 1) return true;
+        return cleared.includes(lvlNum - 1);
+      }
+
       if (levelIdentifier.endsWith('_lvl_2')) return cleared.includes(1);
       if (levelIdentifier.endsWith('_lvl_3')) return cleared.includes(2);
-      if (levelIdentifier.endsWith('_lvl_4')) return cleared.includes(3);
+      if (levelIdentifier.endsWith('_lvl_4')) {
+        if (subject === 'data_structures_algorithms' || levelIdentifier === 'dsa_lvl_4') {
+          return cleared.includes(34);
+        }
+        return cleared.includes(3);
+      }
       if (levelIdentifier.endsWith('_boss')) {
         return cleared.includes(4) || MasteryCompressionEngine.canAccessFinalBoss(subject, profile).allowed;
       }
@@ -608,7 +750,7 @@ export class StorageManager {
         return cleared.includes(1);
       }
       if (levelIdentifier.includes('hidden_trial_2')) {
-        const trial1Id = `${subject === 'mathematics' ? 'math' : 'cs'}_hidden_trial_1`;
+        const trial1Id = `${subject === 'mathematics' ? 'math' : subject === 'data_structures_algorithms' ? 'dsa' : 'cs'}_hidden_trial_1`;
         return clearedTrials.includes(trial1Id);
       }
     }
@@ -627,7 +769,7 @@ export class StorageManager {
     }
     // Hidden Trial 2 (level 102) requires Hidden Trial 1
     if (levelIdentifier === 102) {
-      const trial1Id = `${subject === 'mathematics' ? 'math' : 'cs'}_hidden_trial_1`;
+      const trial1Id = `${subject === 'mathematics' ? 'math' : subject === 'data_structures_algorithms' ? 'dsa' : 'cs'}_hidden_trial_1`;
       return clearedTrials.includes(trial1Id);
     }
 

@@ -389,7 +389,7 @@ console.log('▶ TEST 18: Monte Carlo Stress Test — 1,000 Boss Encounters with
 const bossDefinitions = [
   ...MATH_ENCOUNTERS.filter(e => e.isBoss),
   ...CS_ENCOUNTERS.filter(e => e.isBoss),
-  ...Object.values(ENCOUNTERS_MAP).flatMap(list => list.filter(e => e.isBoss || e.levelNumber === 5)),
+  ...Object.values(ENCOUNTERS_MAP).flatMap(list => list.filter(e => e.isBoss || (e.subject !== 'data_structures_algorithms' && e.levelNumber === 5))),
 ];
 
 let totalSimulations = 1000;

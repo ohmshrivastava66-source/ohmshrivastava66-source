@@ -1,4 +1,4 @@
-import { SubjectId } from './game';
+import { SubjectId, CanonicalRealmId } from './game';
 
 export interface ActionTelemetryItem {
   stepIndex: number;
@@ -99,17 +99,27 @@ export interface PlayerProfile {
   level: number;
   xp: number;
   xpToNextLevel: number;
-  subjectMastery: Record<SubjectId, number>; // 0 to 100
-  clearedLevels: Record<SubjectId, number[]>; // array of cleared level numbers
+  subjectMastery: Record<CanonicalRealmId, number> & Partial<Record<SubjectId, number>>; // 0 to 100
+  clearedLevels: Record<CanonicalRealmId, number[]> & Partial<Record<SubjectId, number[]>>; // array of cleared level numbers
+  clearedHiddenTrials?: Record<CanonicalRealmId, string[]> & Partial<Record<SubjectId, string[]>>;
   unlockedCardIds: string[];
   relics: string[];
   strengths: string[];
   weaknesses: string[];
   runHistory: RunRecord[];
   activeEducationLevel: string;
+  activeKingdom?: string;
+  activeClass?: string;
+  contextProgress?: Record<
+    string,
+    {
+      mastery: number;
+      clearedLevels: number[];
+      clearedHiddenTrials?: string[];
+    }
+  >;
   conceptPerformance?: Record<string, ConceptPerformanceRecord>;
   dangerCooldownBattles?: number;
-  clearedHiddenTrials?: Record<SubjectId, string[]>;
   masteryCompressionRecords?: Record<
     string,
     {

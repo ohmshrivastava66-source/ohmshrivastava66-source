@@ -10,7 +10,7 @@ import {
 } from '../engine/LearningProfileTranslator';
 import { getRelicMetadata } from '../engine/RelicCatalog';
 import { BOSS_COUNCIL_MEMBERS, REALM_BOSS_LEVELS } from '../engine/ConvergenceEngine';
-import { SubjectId } from '../types/game';
+import { SubjectId, CanonicalRealmId } from '../types/game';
 import {
   User,
   Award,
@@ -78,6 +78,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   // Realm Boss Record
   const defeatedBossCount = LearningProfileTranslator.getDefeatedBossCount(profile);
+  const canonicalRealms = Object.keys(REALM_BOSS_LEVELS) as CanonicalRealmId[];
   const allSubjects = Object.keys(ALL_SUBJECTS) as SubjectId[];
 
   // Realm Conqueror designations (only show legitimately earned titles)
@@ -362,7 +363,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-              {allSubjects.map(subjId => {
+              {canonicalRealms.map(subjId => {
                 const subj = ALL_SUBJECTS[subjId];
                 const mastery = profile.subjectMastery[subjId] || 0;
                 const isBossDefeated = LearningProfileTranslator.isBossDefeated(profile, subjId);
@@ -425,7 +426,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1">
-              {allSubjects.map(subjId => {
+              {canonicalRealms.map(subjId => {
                 const bossInfo = BOSS_COUNCIL_MEMBERS[subjId];
                 const isDefeated = LearningProfileTranslator.isBossDefeated(profile, subjId);
                 const isUnlocked = StorageManager.isLevelUnlocked(profile.clearedLevels ? subjId : 'mathematics', REALM_BOSS_LEVELS[subjId], profile);

@@ -230,6 +230,12 @@ export const CS_SURPRISE_AMBUSH: SurpriseAttackDefinition = {
 export const SURPRISE_ATTACKS_MAP: Record<SubjectId, SurpriseAttackDefinition> = {
   mathematics: MATH_SURPRISE_AMBUSH,
   computerScience: CS_SURPRISE_AMBUSH,
+  data_structures_algorithms: {
+    ...CS_SURPRISE_AMBUSH,
+    id: 'dsa_surprise_ambush',
+    subject: 'data_structures_algorithms',
+    title: 'The Algorithmic Ambush: Asymptotic Limits & Invariant Synthesis',
+  },
   physics: {
     ...MATH_SURPRISE_AMBUSH,
     id: 'physics_surprise_ambush',

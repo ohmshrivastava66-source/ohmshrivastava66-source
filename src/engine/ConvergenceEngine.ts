@@ -1,4 +1,4 @@
-import { SubjectId } from '../types/game';
+import { SubjectId, CanonicalRealmId } from '../types/game';
 import { PlayerProfile } from '../types/telemetry';
 import { ConvergenceTrial, BossCouncilMember, BossRageState } from '../types/convergence';
 import { ALL_SUBJECTS } from '../curriculum/registry';
@@ -6,7 +6,7 @@ import { CONVERGENCE_STATIC_TRIALS } from '../curriculum/convergenceTrials';
 import { Mulberry32PRNG } from './DangerEngine';
 
 // Required boss level numbers across all 8 realms
-export const REALM_BOSS_LEVELS: Record<SubjectId, number> = {
+export const REALM_BOSS_LEVELS: Record<CanonicalRealmId, number> = {
   mathematics: 5,
   computerScience: 5,
   physics: 3,
@@ -17,7 +17,7 @@ export const REALM_BOSS_LEVELS: Record<SubjectId, number> = {
   language: 3,
 };
 
-export const BOSS_COUNCIL_MEMBERS: Record<SubjectId, BossCouncilMember> = {
+export const BOSS_COUNCIL_MEMBERS: Record<CanonicalRealmId, BossCouncilMember> = {
   mathematics: {
     id: 'mathematics',
     name: 'The Singularity Archon',
@@ -290,7 +290,7 @@ export class ConvergenceEngine {
       return false;
     }
 
-    const allSubjects: SubjectId[] = [
+    const allSubjects: CanonicalRealmId[] = [
       'mathematics',
       'computerScience',
       'physics',
@@ -343,7 +343,7 @@ export class ConvergenceEngine {
     rageLevel: number,
     outcome: 'correct' | 'wrong'
   ): { speaker: string; title: string; quote: string; color: string } {
-    const member = BOSS_COUNCIL_MEMBERS[bossId] || BOSS_COUNCIL_MEMBERS.mathematics;
+    const member = BOSS_COUNCIL_MEMBERS[bossId as CanonicalRealmId] || BOSS_COUNCIL_MEMBERS.mathematics;
     const clampedRage = Math.max(1, Math.min(5, rageLevel));
     const rageKey = `rage${clampedRage}` as 'rage1' | 'rage2' | 'rage3' | 'rage4' | 'rage5';
     const lines = member.taunts[rageKey]?.[outcome] || ['"..."'];
