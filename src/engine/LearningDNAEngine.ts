@@ -165,32 +165,45 @@ export class LearningDNAEngine {
     totalSteps: number
   ): LearningDNA {
     const updated = { ...dna };
+    const latency = action.actionLatencyMs ?? action.timeSinceLastActionMs ?? 3000;
+    const isCorrect = action.isCorrect !== undefined ? action.isCorrect : (action.isExpected ?? true);
 
     // Speed profile
     updated.speedProfile = this.updateSpeedProfile(
       updated.speedProfile,
-      action.timeSinceLastActionMs,
-      action.timeSinceLastActionMs < 6000
+      latency,
+      latency < 6000
     );
 
     // Accuracy
-    updated.accuracy = this.updateAccuracy(updated.accuracy, action.isExpected);
+    updated.accuracy = this.updateAccuracy(updated.accuracy, isCorrect);
 
     // Risk taking / Impulsive
-    const isImpulsive = action.timeSinceLastActionMs < 4000 && !action.isExpected;
+    const isImpulsive = latency < 4000 && !isCorrect;
     updated.riskTaking = this.updateRiskTaking(
       updated.riskTaking,
       isImpulsive,
-      action.timeSinceLastActionMs < 8000
+      latency < 8000
     );
 
     // Verification habit
-    if (action.operationKey === 'VERIFY' || action.operationKey === 'CHECK') {
+    const isVerification =
+      action.isVerificationCard === true ||
+      action.operationKey === 'VERIFY' ||
+      action.operationKey === 'CHECK' ||
+      (typeof action.operationKey === 'string' &&
+        (action.operationKey.startsWith('VERIFY_') || action.operationKey.startsWith('CHECK_')));
+
+    if (isVerification) {
       updated.verificationHabit = this.updateVerificationHabit(
         updated.verificationHabit,
         true
       );
-    } else if (action.stepIndex === totalSteps - 1 && !action.isExpected) {
+    } else if (
+      action.isVerificationCard === false ||
+      !isCorrect ||
+      (action.stepIndex !== undefined && action.stepIndex === totalSteps - 1 && !isCorrect)
+    ) {
       updated.verificationHabit = this.updateVerificationHabit(
         updated.verificationHabit,
         false
@@ -198,7 +211,7 @@ export class LearningDNAEngine {
     }
 
     // Pattern recognition
-    if (action.stepIndex === 0 && action.isExpected && action.timeSinceLastActionMs < 12000) {
+    if (action.stepIndex === 0 && isCorrect && latency < 12000) {
       updated.patternRecognition = this.updatePatternRecognition(
         updated.patternRecognition,
         true

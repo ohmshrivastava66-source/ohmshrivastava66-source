@@ -1,14 +1,20 @@
 import { SubjectId, CanonicalRealmId } from './game';
 
 export interface ActionTelemetryItem {
-  stepIndex: number;
-  operationKey: string;
-  cardName: string;
-  timestamp: number;
-  timeSinceLastActionMs: number;
-  isExpected: boolean;
+  stepIndex?: number;
+  operationKey?: string;
+  cardName?: string;
+  timestamp?: number;
+  timeSinceLastActionMs?: number;
+  actionLatencyMs?: number;
+  isExpected?: boolean;
+  isCorrect?: boolean;
   expectedOperation?: string;
   deviatedCategory?: string;
+  cardSlotIndex?: number;
+  isVerificationCard?: boolean;
+  cardId?: string;
+  equationStateBefore?: string;
 }
 
 export interface LiveTelemetryMetrics {
@@ -18,6 +24,10 @@ export interface LiveTelemetryMetrics {
   repeatedPatternCount: number;
   averageResponseTimeMs: number;
   impulsiveActionDetected: boolean;
+  cardSlotIndices?: number[];
+  slotEntropy?: number;
+  isRapidExploit?: boolean;
+  behaviorClassification?: 'GENUINE_MASTERY' | 'FAST_RELIABLE_REASONING' | 'RAPID_PATTERN_EXPLOIT' | 'UNCERTAIN_MASTERY' | 'DELIBERATE_METHODICAL';
 }
 
 export interface DiagnosisResult {
@@ -142,6 +152,11 @@ export interface PlayerProfile {
   discoveredRelics?: string[];
   equippedRelics?: string[];
   prestigeTitles?: string[];
+  dsaHiddenPathDiscovered?: boolean;
+  dsaHiddenPathClearedLevels?: number[];
+  dsaHiddenPathBossDefeated?: boolean;
+  behaviorClassification?: 'GENUINE_MASTERY' | 'FAST_RELIABLE_REASONING' | 'RAPID_PATTERN_EXPLOIT' | 'UNCERTAIN_MASTERY' | 'DELIBERATE_METHODICAL';
+  exploitStreakCount?: number;
 }
 
 export interface SurpriseAttackTelemetryRecord {

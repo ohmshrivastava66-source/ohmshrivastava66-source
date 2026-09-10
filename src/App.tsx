@@ -202,7 +202,7 @@ export const App: React.FC = () => {
   const [lastDefeatStepIndex, setLastDefeatStepIndex] = useState<number>(0);
   const [lastDefeatAttemptedOp, setLastDefeatAttemptedOp] = useState<string>('');
 
-  const handleVictory = (encounter: EncounterDefinition, turnsUsed: number) => {
+  const handleVictory = (encounter: EncounterDefinition, turnsUsed: number, timeTakenSeconds?: number) => {
     setLastVictoryEncounter(encounter);
     setLastVictoryTurns(turnsUsed);
     setLastUnlockedCard(encounter.unlockedCard);
@@ -215,7 +215,9 @@ export const App: React.FC = () => {
       encounter.rewardXp,
       encounter.rewardMastery,
       encounter.unlockedCard?.id,
-      encounter
+      encounter,
+      timeTakenSeconds,
+      turnsUsed
     );
     setProfile(updatedProfile);
     setCurrentScreen('VICTORY');

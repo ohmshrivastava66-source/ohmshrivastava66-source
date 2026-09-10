@@ -21,7 +21,7 @@ import { ALL_SUBJECTS } from '../curriculum/registry';
 interface BattleScreenProps {
   encounter: EncounterDefinition;
   activeDanger?: DangerEventDefinition;
-  onVictory: (encounter: EncounterDefinition, turnsUsed: number) => void;
+  onVictory: (encounter: EncounterDefinition, turnsUsed: number, timeTakenSeconds?: number) => void;
   onDefeat: (
     encounter: EncounterDefinition,
     weaknessName?: string,
@@ -93,7 +93,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setCharacterPose('victory');
       sounds.playVictory();
       const timer = setTimeout(() => {
-        onVictory(encounter, gameState.turnNumber);
+        onVictory(encounter, gameState.turnNumber, telemetry.getElapsedTimeSeconds());
       }, 1000);
       return () => clearTimeout(timer);
     }

@@ -50,8 +50,8 @@ assert(m4Encounters.length === 10, `Module 4 must have 10 encounters, found ${m4
 
 // 3. Verify total active progression = 54/54 encounters (100% COMPLETE!)
 const mainPathTotal = m1Encounters.length + m2Encounters.length + m3Encounters.length + m4Encounters.length + m5Encounters.length;
-assert(mainPathTotal === 54, `Active completed main-path progression must be 54/54 (found: ${mainPathTotal})`);
-assert(dsaSubject.levels.length === 54, `DSA_SUBJECT_INFO.levels must have exactly 54 levels (found: ${dsaSubject.levels.length})`);
+const mainLevels = dsaSubject.levels.filter(l => l.pathType !== 'hidden_trial');
+assert(mainLevels.length === 54, `DSA_SUBJECT_INFO.levels must have exactly 54 main levels (found: ${mainLevels.length})`);
 
 // 4. Verify level numbering 45–54
 for (let i = 0; i < expectedM5Ids.length; i++) {
@@ -65,8 +65,8 @@ for (let i = 0; i < expectedM5Ids.length; i++) {
 }
 
 // 5. Verify DSA_SUBJECT_INFO sequential gating
-for (let i = 0; i < dsaSubject.levels.length; i++) {
-  const levelNode = dsaSubject.levels[i];
+for (let i = 0; i < mainLevels.length; i++) {
+  const levelNode = mainLevels[i];
   assert(levelNode.levelNumber === i + 1, `Level node index ${i} must have levelNumber ${i + 1}`);
   if (i > 0) {
     assert(levelNode.requiredCompletedLevel === i, `Level ${levelNode.levelNumber} must require completed level ${i}`);

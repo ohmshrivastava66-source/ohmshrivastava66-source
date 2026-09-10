@@ -126,6 +126,24 @@ export class LearningProfileTranslator {
       } else if (w.toLowerCase().includes('inversion') || w.toLowerCase().includes('sorting') || w.toLowerCase().includes('bound')) {
         cleanConcept = 'Boundary Constraints & Sorting Invariants';
         note = 'Maintain pointer bounds carefully to avoid boundary index traps.';
+      } else if (w.toLowerCase().includes('asymptot') || w.toLowerCase().includes('growth') || w.toLowerCase().includes('big_o')) {
+        cleanConcept = 'Asymptotic Bounds & Growth Rates';
+        note = 'Analyze dominant term behavior under asymptotic limits as n approaches infinity.';
+      } else if (w.toLowerCase().includes('recurren') || w.toLowerCase().includes('master_method') || w.toLowerCase().includes('divide')) {
+        cleanConcept = 'Recurrence Relations & Divide-and-Conquer';
+        note = 'Compare log_b(a) with the work function f(n) to determine recurrence cases.';
+      } else if (w.toLowerCase().includes('tree') || w.toLowerCase().includes('avl') || w.toLowerCase().includes('rotation')) {
+        cleanConcept = 'Tree Balancing & Invariant Preservation';
+        note = 'Verify balance factors after insertions to select appropriate single or double rotations.';
+      } else if (w.toLowerCase().includes('graph') || w.toLowerCase().includes('bfs') || w.toLowerCase().includes('dfs')) {
+        cleanConcept = 'Graph Traversal & Reachability Invariants';
+        note = 'Track visited states carefully to prevent cycles and ensure complete path discovery.';
+      } else if (w.toLowerCase().includes('greedy') || w.toLowerCase().includes('knapsack') || w.toLowerCase().includes('subproblem')) {
+        cleanConcept = 'Greedy Invariants & Optimal Substructure';
+        note = 'Confirm whether local greedy choice preserves global optimality before committing.';
+      } else if (w.toLowerCase().includes('reduction') || w.toLowerCase().includes('np') || w.toLowerCase().includes('complexity')) {
+        cleanConcept = 'Polynomial Reductions & Intractability';
+        note = 'Ensure reduction direction maps known hard instances to target instances in polynomial time.';
       } else if (w.toLowerCase().includes('ambush') || w.toLowerCase().includes('dimensional')) {
         cleanConcept = 'Multi-Concept Synthesis Under Pressure';
         note = 'Break compound cross-domain constraints down into sequential single-axiom steps.';
@@ -225,6 +243,10 @@ export class LearningProfileTranslator {
    * Checks whether a specific realm sovereign has been defeated.
    */
   public static isBossDefeated(profile: PlayerProfile, subject: SubjectId): boolean {
+    if (subject === 'data_structures_algorithms') {
+      const cleared = profile.clearedLevels['data_structures_algorithms'] || [];
+      return cleared.includes(54);
+    }
     const requiredLevel = (REALM_BOSS_LEVELS as Record<string, number>)[subject];
     if (!requiredLevel) return false;
     const cleared = profile.clearedLevels[subject] || [];
@@ -232,9 +254,21 @@ export class LearningProfileTranslator {
   }
 
   /**
-   * Counts total realm sovereigns defeated across all 8 realms.
+   * Counts total realm sovereigns defeated across all realms (including DSA).
    */
   public static getDefeatedBossCount(profile: PlayerProfile): number {
+    const allSubjects = Object.keys(REALM_BOSS_LEVELS) as SubjectId[];
+    let count = allSubjects.filter(subj => this.isBossDefeated(profile, subj)).length;
+    if (this.isBossDefeated(profile, 'data_structures_algorithms')) {
+      count += 1;
+    }
+    return count;
+  }
+
+  /**
+   * Counts total canonical realm council bosses defeated (out of 8).
+   */
+  public static getDefeatedCouncilBossCount(profile: PlayerProfile): number {
     const allSubjects = Object.keys(REALM_BOSS_LEVELS) as SubjectId[];
     return allSubjects.filter(subj => this.isBossDefeated(profile, subj)).length;
   }

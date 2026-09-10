@@ -657,6 +657,20 @@ export const DSA_STARTER_CARDS: Card[] = [
     flavorQuote: 'Why seek in the dark for what cannot rival the light we already possess?',
   },
   {
+    id: 'dsa_prune_state_space',
+    name: 'Analyze Combinatorial Space',
+    cost: 1,
+    subject: 'data_structures_algorithms',
+    rarity: 'common',
+    operationKey: 'PRUNE_STATE_SPACE',
+    description: 'Evaluate exponential combinatorial truth assignments and isolate intractability roots.',
+    effectText: 'Analyzes exponential search spaces. Deals 45 DMG & shields 15.',
+    damage: 45,
+    shield: 15,
+    iconName: 'Cpu',
+    flavorQuote: 'Explore the vastness of the state space to isolate the hardest constraints.',
+  },
+  {
     id: 'dsa_select_strategy',
     name: 'Select Paradigm',
     cost: 1,
@@ -999,16 +1013,24 @@ export const DSA_STARTER_CARDS: Card[] = [
 ];
 
 // Helper to provide valid cards for each encounter including alternatives and distractors
-function getValidCards(requiredOps: string[]): Card[] {
+function getValidCards(requiredOps: string[], isBoss: boolean = false): Card[] {
   const map = new Map<string, Card>();
   for (const op of requiredOps) {
     const card = DSA_STARTER_CARDS.find(c => c.operationKey === op);
     if (card) map.set(card.id, card);
   }
   const defaultOps = ['BOUND_ASYMPTOTIC', 'VERIFY_INVARIANT', 'IDENTIFY_DOMINANT', 'COUNT_OPERATIONS', 'TRACE_ARRAY', 'CHECK_TREE', 'DIVIDE_CONQUER', 'BACKTRACK_SEARCH', 'COMPUTE_BOUND', 'FORMULATE_STATE', 'DEFINE_RECURRENCE', 'RELAX_EDGE', 'VERIFY_CERTIFICATE', 'CONSTRUCT_REDUCTION', 'MAP_GADGET', 'INVERT_COMPLEMENT', 'BOUND_APPROXIMATION_RATIO'];
+  let added = 0;
+  const targetDistractors = isBoss ? Math.max(3, 8 - map.size) : 8;
   for (const op of defaultOps) {
-    const card = DSA_STARTER_CARDS.find(c => c.operationKey === op);
-    if (card && !map.has(card.id)) map.set(card.id, card);
+    if (!requiredOps.includes(op)) {
+      const card = DSA_STARTER_CARDS.find(c => c.operationKey === op);
+      if (card && !map.has(card.id)) {
+        map.set(card.id, card);
+        added++;
+        if (added >= targetDistractors) break;
+      }
+    }
   }
   return Array.from(map.values());
 }
@@ -1997,7 +2019,7 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         ],
       },
     ],
-    validCards: getValidCards(['APPLY_MASTER_THEOREM', 'EXPAND_RECURRENCE', 'BOUND_ASYMPTOTIC', 'VERIFY_INVARIANT']),
+    validCards: getValidCards(['APPLY_MASTER_THEOREM', 'EXPAND_RECURRENCE', 'BOUND_ASYMPTOTIC', 'VERIFY_INVARIANT'], true),
     misconceptions: [
       {
         triggerOperation: 'ANALYZE_CASES',
@@ -3455,7 +3477,7 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         ],
       },
     ],
-    validCards: getValidCards(['BST_SEARCH', 'CHECK_BALANCE', 'AVL_ROTATE', 'VERIFY_INVARIANT']),
+    validCards: getValidCards(['BST_SEARCH', 'CHECK_BALANCE', 'AVL_ROTATE', 'VERIFY_INVARIANT'], true),
     misconceptions: [
       {
         triggerOperation: 'PUSH_STACK',
@@ -3966,25 +3988,48 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         operationKey: 'GROW_CUT_PRIM',
         resultingState: 'Cut partitioned: Graph divided into visited tree cut S and unvisited V - S; light edge crossing cut extracted.',
         explanation: 'Applied Cut Property: For any partition (S, V - S), the light edge connecting S to V - S is safe to add to the MST.',
-        damageValue: 50,
+        damageValue: 70,
       },
       {
         stepIndex: 1,
         operationKey: 'FIND_UNION_CYCLE',
         resultingState: 'Cycle contradiction resolved: Adding alternative non-tree edge forms cycle containing strictly heavier edge on cut.',
         explanation: 'Proved via exchange argument that swapping the light edge for any alternative edge on the cycle cannot decrease total tree weight.',
-        damageValue: 55,
+        damageValue: 70,
       },
       {
         stepIndex: 2,
         operationKey: 'VERIFY_INVARIANT',
         resultingState: 'Light Edge Crossing Cut Added | Minimum Spanning Tree Synthesized [ENTROPY PARTITIONER VANQUISHED]',
         explanation: 'Synthesized MST paradigms: Prim expands cut boundaries around connected root, while Kruskal merges disjoint forest components.',
-        damageValue: 55,
+        damageValue: 70,
       },
     ],
-    validCards: getValidCards(['GROW_CUT_PRIM', 'FIND_UNION_CYCLE', 'VERIFY_INVARIANT', 'SORT_EDGES', 'REPRESENT_GRAPH', 'SELECT_STRATEGY']),
-    misconceptions: [],
+    validCards: getValidCards(['GROW_CUT_PRIM', 'FIND_UNION_CYCLE', 'VERIFY_INVARIANT', 'SORT_EDGES', 'REPRESENT_GRAPH', 'SELECT_STRATEGY'], true),
+    misconceptions: [
+      {
+        triggerOperation: 'FIND_UNION_CYCLE',
+        atStepIndex: 0,
+        diagnosisType: 'procedural_error',
+        title: 'Cycle Check Preceding Cut Partition',
+        diagnosisExplanation: 'Cannot check cycle union before establishing cut boundaries and extracting candidate light edges.',
+        enemyAdaptationName: 'Topological Shroud',
+        enemyAdaptationEffect: 'The Entropy Partitioner fractures the spanning cut.',
+        repairConcept: 'Partition cut (S, V - S) and select light edge first.',
+        echoVaultId: 'vault_dsa_spanning',
+      },
+      {
+        triggerOperation: 'VERIFY_INVARIANT',
+        atStepIndex: 1,
+        diagnosisType: 'procedural_error',
+        title: 'Premature Spanning Tree Invariant',
+        diagnosisExplanation: 'Cannot verify spanning invariant before resolving cycle contradictions via the exchange argument.',
+        enemyAdaptationName: 'Cut Disruption',
+        enemyAdaptationEffect: 'The Partitioner repels ungrounded invariant assertions.',
+        repairConcept: 'Resolve cycle contradiction via disjoint union before final verification.',
+        echoVaultId: 'vault_dsa_spanning',
+      },
+    ],
     enemy: {
       name: 'Entropy Partitioner',
       title: 'Sovereign of Partition Cuts',
@@ -4549,24 +4594,24 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         operationKey: 'FORMULATE_STATE',
         resultingState: 'Intermediate vertex state space formulated: D^(k)[i, j] defines shortest path using intermediate vertices from {1..k}.',
         explanation: 'Defined 3D dynamic programming state: Base case D^(0) matches adjacency weights; each layer adds one candidate intermediate waypoint.',
-        damageValue: 50,
+        damageValue: 110,
       },
       {
         stepIndex: 1,
         operationKey: 'RELAX_ALL_PAIRS',
         resultingState: 'Triple loop relaxation executed: D^(k)[i, j] = min(D^(k-1)[i, j], D^(k-1)[i, k] + D^(k-1)[k, j]) for all pairs (i, j).',
         explanation: 'Propagated all-pairs relaxations in O(V^3) time with intermediate vertex k strictly in the outermost loop.',
-        damageValue: 55,
+        damageValue: 110,
       },
       {
         stepIndex: 2,
         operationKey: 'VERIFY_TRIANGLE_INEQUALITY',
         resultingState: 'Matrix D^(V) Complete: All-Pairs Shortest Paths Verified, Diagonal D[i,i] >= 0 [METRIC ARBITER SUBMITTED]',
-        explanation: 'Checked diagonal elements D[i, i] >= 0, proving absence of negative cycles and confirming all-pairs metric integrity.',
-        damageValue: 55,
+        explanation: 'Confirmed all-pairs metric integrity: Triangle inequality D[i, j] <= D[i, k] + D[k, j] satisfied globally.',
+        damageValue: 100,
       },
     ],
-    validCards: getValidCards(['FORMULATE_STATE', 'RELAX_ALL_PAIRS', 'VERIFY_TRIANGLE_INEQUALITY', 'BOUND_ASYMPTOTIC', 'VERIFY_INVARIANT']),
+    validCards: getValidCards(['FORMULATE_STATE', 'RELAX_ALL_PAIRS', 'VERIFY_TRIANGLE_INEQUALITY', 'BOUND_ASYMPTOTIC', 'VERIFY_INVARIANT'], true),
     misconceptions: [
       {
         triggerOperation: 'BOUND_ASYMPTOTIC',
@@ -4577,6 +4622,17 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         enemyAdaptationName: 'Innermost Intermediate Trap',
         enemyAdaptationEffect: 'Adversary collapses all-pairs propagation by nesting intermediate pivots innermost.',
         repairConcept: 'In Floyd-Warshall, intermediate waypoint k is outermost loop: for k, for i, for j.',
+        echoVaultId: 'vault_dsa_optimization',
+      },
+      {
+        triggerOperation: 'VERIFY_TRIANGLE_INEQUALITY',
+        atStepIndex: 0,
+        diagnosisType: 'procedural_error',
+        title: 'Premature Triangle Inequality Assertion',
+        diagnosisExplanation: 'Cannot certify metric triangle inequality before completing all-pairs intermediate vertex relaxations.',
+        enemyAdaptationName: 'Metric Warp',
+        enemyAdaptationEffect: 'The Metric Arbiter shatters unrelaxed triangle inequalities.',
+        repairConcept: 'Formulate dynamic programming state and perform triple loop relaxation first.',
         echoVaultId: 'vault_dsa_optimization',
       },
     ],
@@ -5052,7 +5108,7 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         damageValue: 60,
       },
     ],
-    validCards: getValidCards(['VERIFY_CERTIFICATE', 'CONSTRUCT_REDUCTION', 'MAP_GADGET', 'VERIFY_INVARIANT', 'BOUND_ASYMPTOTIC']),
+    validCards: getValidCards(['VERIFY_CERTIFICATE', 'CONSTRUCT_REDUCTION', 'MAP_GADGET', 'VERIFY_INVARIANT', 'BOUND_ASYMPTOTIC'], true),
     misconceptions: [
       {
         triggerOperation: 'BOUND_ASYMPTOTIC',
@@ -5327,7 +5383,7 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         damageValue: 65,
       },
     ],
-    validCards: getValidCards(['VERIFY_CERTIFICATE', 'MAP_GADGET', 'SHORTCUT_TOUR', 'BOUND_APPROXIMATION_RATIO', 'CONSTRUCT_REDUCTION', 'VERIFY_TRIANGLE_INEQUALITY', 'BOUND_ASYMPTOTIC']),
+    validCards: getValidCards(['VERIFY_CERTIFICATE', 'MAP_GADGET', 'SHORTCUT_TOUR', 'BOUND_APPROXIMATION_RATIO', 'CONSTRUCT_REDUCTION', 'VERIFY_TRIANGLE_INEQUALITY', 'BOUND_ASYMPTOTIC'], true),
     misconceptions: [
       {
         triggerOperation: 'CONSTRUCT_REDUCTION',
@@ -5928,6 +5984,138 @@ export const DSA_SUBJECT_INFO: SubjectInfo = {
       isBoss: true,
       pathType: 'main',
       requiredCompletedLevel: 53,
+    },
+    {
+      id: 'dsa_hidden_hd1',
+      levelNumber: 101,
+      title: 'The Complexity Convergence',
+      topic: 'Operation Counting + Asymptotics + Case Distributions',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 1,
+      compressedConcepts: ['dsa_asymptotics', 'dsa_case_analysis'],
+      requiredCompletedLevel: 10,
+    },
+    {
+      id: 'dsa_hidden_hd2',
+      levelNumber: 102,
+      title: 'The Recurrence Crucible',
+      topic: 'Recurrence Trees + Master Theorem + Substitution Induction',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 2,
+      compressedConcepts: ['dsa_recurrences', 'dsa_master_theorem'],
+      requiredCompletedLevel: 101,
+    },
+    {
+      id: 'dsa_hidden_hd3',
+      levelNumber: 103,
+      title: 'The Linear Buffer Fusion',
+      topic: 'Circular Buffers + Double-Ended Queues + Dynamic Expansion',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 3,
+      compressedConcepts: ['dsa_arrays_buffers', 'dsa_deques'],
+      requiredCompletedLevel: 102,
+    },
+    {
+      id: 'dsa_hidden_hd4',
+      levelNumber: 104,
+      title: 'The Pointer Weaver',
+      topic: 'Linked List Reversal + Floyd Cycle Detection + Stack Frames',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 4,
+      compressedConcepts: ['dsa_linked_lists', 'dsa_stacks'],
+      requiredCompletedLevel: 103,
+    },
+    {
+      id: 'dsa_hidden_hd5',
+      levelNumber: 105,
+      title: 'The Graph Traversal Trial',
+      topic: 'Adjacency Lists/Matrices + BFS Shortest Paths + DFS Cycle Detection + DAG Algorithm Selection',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 5,
+      compressedConcepts: ['dsa_graphs', 'dsa_graph_traversal'],
+      requiredCompletedLevel: 104,
+    },
+    {
+      id: 'dsa_hidden_hd6',
+      levelNumber: 106,
+      title: 'The Graph Traversal Synapse',
+      topic: 'Adjacency Lists + BFS Shortest Hops + DFS Back-Edge Cycles',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 6,
+      compressedConcepts: ['dsa_graphs', 'dsa_graph_traversal'],
+      requiredCompletedLevel: 105,
+    },
+    {
+      id: 'dsa_hidden_hd7',
+      levelNumber: 107,
+      title: 'The Divide & Conquer Vanguard',
+      topic: 'Subproblem Decomposition + Partition Invariants + Decision Tree Bounds',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 7,
+      compressedConcepts: ['dsa_divide_conquer', 'dsa_sorting_bounds'],
+      requiredCompletedLevel: 106,
+    },
+    {
+      id: 'dsa_hidden_hd8',
+      levelNumber: 108,
+      title: 'The Backtrack & Prune Spire',
+      topic: 'State-Space Trees + Branch & Bound Pruning + Candidate Verification',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 8,
+      compressedConcepts: ['dsa_backtracking', 'dsa_branch_bound'],
+      requiredCompletedLevel: 107,
+    },
+    {
+      id: 'dsa_hidden_hd9',
+      levelNumber: 109,
+      title: 'The Greedy Horizon',
+      topic: 'Greedy-Choice Property + Optimal Prefix Trees + Matroid Independence',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 9,
+      compressedConcepts: ['dsa_greedy_choice', 'dsa_mst'],
+      requiredCompletedLevel: 108,
+    },
+    {
+      id: 'dsa_hidden_hd10',
+      levelNumber: 110,
+      title: 'The Dynamic Programming Matrix',
+      topic: 'Optimal Substructure + Overlapping Subproblems + 2D Tabulation',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 10,
+      compressedConcepts: ['dsa_dp_formulation', 'dsa_dp_tabulation'],
+      requiredCompletedLevel: 109,
+    },
+    {
+      id: 'dsa_hidden_hd11',
+      levelNumber: 111,
+      title: 'The Shortest Path Meridian',
+      topic: 'Edge Relaxation + Negative Weight Cycle Detection + Triangle Inequality',
+      isBoss: false,
+      pathType: 'hidden_trial',
+      trialOrder: 11,
+      compressedConcepts: ['dsa_shortest_paths', 'dsa_network_flows'],
+      requiredCompletedLevel: 110,
+    },
+    {
+      id: 'dsa_hidden_hd12',
+      levelNumber: 112,
+      title: 'The Algorithmic Ascension',
+      topic: 'Grand Mastery Synthesis: NP-Completeness + Poly-Reductions + Approximation Bounds',
+      isBoss: true,
+      pathType: 'hidden_trial',
+      trialOrder: 12,
+      compressedConcepts: ['dsa_np_reductions', 'dsa_approximation'],
+      requiredCompletedLevel: 111,
     },
   ],
 };

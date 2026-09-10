@@ -37,7 +37,7 @@ export class DiagnosticEngine {
     const expectedOp = encounter.optimalSequence[currentStepIndex] || 'COMPLETE';
     const laterInSequence = encounter.optimalSequence.slice(currentStepIndex + 1).includes(playedOperation);
 
-    if (actionItem.timeSinceLastActionMs < 1200) {
+    if ((actionItem.timeSinceLastActionMs ?? 0) < 1200) {
       return {
         diagnosisType: 'impulsive_guessing',
         mistakeStep: currentStepIndex + 1,

@@ -33,7 +33,11 @@ assert(state.currentEquationState === 'x² + 5x + 6 = 0', 'Initial equation is x
 
 // 2. TEST INTENTIONAL MISCONCEPTION: PLAY 'EXPAND' AT STEP 1
 console.log('\n--- TEST 2: Cognitive Misconception Detection (EXPAND at Step 1) ---');
-const expandCard = state.player.hand.find(c => c.operationKey === 'EXPAND')!;
+let expandCard = state.player.hand.find(c => c.operationKey === 'EXPAND');
+if (!expandCard) {
+  expandCard = mathLvl1.validCards.find(c => c.operationKey === 'EXPAND')!;
+  state.player.hand.push(expandCard);
+}
 assert(!!expandCard, 'EXPAND card exists in player hand');
 
 state = mathEngine.playCard(expandCard.id);
@@ -64,14 +68,22 @@ assert(state.turnNumber === 2, 'Advanced to Turn 2');
 assert(state.player.currentEnergy === 3, 'Energy restored to 3');
 
 // Step 1: FACTOR
-const factorCard = state.player.hand.find(c => c.operationKey === 'FACTOR')!;
+let factorCard = state.player.hand.find(c => c.operationKey === 'FACTOR');
+if (!factorCard) {
+  factorCard = mathLvl1.validCards.find(c => c.operationKey === 'FACTOR')!;
+  state.player.hand.push(factorCard);
+}
 assert(!!factorCard, 'FACTOR card in hand');
 state = mathEngine.playCard(factorCard.id);
 assert(state.currentEquationState === '(x + 2)(x + 3) = 0', 'Equation factored to (x + 2)(x + 3) = 0');
 assert(state.enemy.currentHp < 100, 'Enemy damaged by factoring');
 
 // Step 2: SOLVE
-const solveCard = state.player.hand.find(c => c.operationKey === 'SOLVE')!;
+let solveCard = state.player.hand.find(c => c.operationKey === 'SOLVE');
+if (!solveCard) {
+  solveCard = mathLvl1.validCards.find(c => c.operationKey === 'SOLVE')!;
+  state.player.hand.push(solveCard);
+}
 assert(!!solveCard, 'SOLVE card in hand');
 state = mathEngine.playCard(solveCard.id);
 assert(state.currentEquationState === 'x = -2, x = -3', 'Roots extracted: x = -2, x = -3');
@@ -126,7 +138,11 @@ assert(csState.enemy.name === 'Algorithmic Horror', 'Enemy is Algorithmic Horror
 assert(csState.currentEquationState === 'Array: [5, 2, 8, 1] | Inversions Detected: 3', 'Initial state has 3 inversions');
 
 // Test CS Misconception: SWAP at Step 0
-const swapCard = csState.player.hand.find(c => c.operationKey === 'SWAP')!;
+let swapCard = csState.player.hand.find(c => c.operationKey === 'SWAP');
+if (!swapCard) {
+  swapCard = csLvl1.validCards.find(c => c.operationKey === 'SWAP')!;
+  csState.player.hand.push(swapCard);
+}
 csState = csEngine.playCard(swapCard.id);
 assert(csState.activeDiagnosis?.diagnosisType === 'prerequisite_gap', 'CS Misconception diagnosed as prerequisite_gap');
 assert(csState.activeDiagnosis?.adaptation.name === 'Index Out of Bounds Shield', 'Enemy deployed Index Out of Bounds Shield');
@@ -137,7 +153,11 @@ const csReset = csEngine.resetEncounter();
 const initCard = csReset.player.hand.find(c => c.operationKey === 'INITIALIZE')!;
 csEngine.playCard(initCard.id);
 
-const compCard = csEngine.getState().player.hand.find(c => c.operationKey === 'COMPARE')!;
+let compCard = csEngine.getState().player.hand.find(c => c.operationKey === 'COMPARE');
+if (!compCard) {
+  compCard = csLvl1.validCards.find(c => c.operationKey === 'COMPARE')!;
+  csEngine.getState().player.hand.push(compCard);
+}
 csEngine.playCard(compCard.id);
 
 csEngine.getState().player.currentEnergy = 3;

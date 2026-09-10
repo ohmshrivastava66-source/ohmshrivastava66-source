@@ -19,6 +19,8 @@ export interface HiddenTrialFailureDiagnosis {
   failedConcept: string;
   recommendedMainPathLevel: number;
   conceptExplanation: string;
+  recommendRemediation?: boolean;
+  remediationLevels?: number[];
 }
 
 export class MasteryCompressionEngine {
@@ -37,10 +39,30 @@ export class MasteryCompressionEngine {
       'cs_dynamic_programming',
     ],
     data_structures_algorithms: [
-      'dsa_asymptotic_recurrence',
+      'dsa_asymptotics',
+      'dsa_case_analysis',
+      'dsa_recurrences',
+      'dsa_master_theorem',
+      'dsa_arrays_buffers',
+      'dsa_deques',
+      'dsa_linked_lists',
+      'dsa_stacks',
+      'dsa_bst',
+      'dsa_avl_trees',
+      'dsa_graphs',
+      'dsa_graph_traversal',
       'dsa_divide_conquer',
-      'dsa_balanced_trees',
-      'dsa_graph_shortest_path',
+      'dsa_sorting_bounds',
+      'dsa_backtracking',
+      'dsa_branch_bound',
+      'dsa_greedy_choice',
+      'dsa_mst',
+      'dsa_dp_formulation',
+      'dsa_dp_tabulation',
+      'dsa_shortest_paths',
+      'dsa_network_flows',
+      'dsa_np_reductions',
+      'dsa_approximation',
     ],
     physics: ['phys_force_acceleration', 'phys_potential_kinetic'],
     chemistry: ['chem_stoichiometry', 'chem_titration_ph'],
@@ -65,10 +87,30 @@ export class MasteryCompressionEngine {
       4: 'cs_dynamic_programming',
     },
     data_structures_algorithms: {
-      1: 'dsa_asymptotic_recurrence',
-      2: 'dsa_divide_conquer',
-      3: 'dsa_balanced_trees',
-      4: 'dsa_graph_shortest_path',
+      1: 'dsa_asymptotics',
+      2: 'dsa_asymptotics',
+      3: 'dsa_case_analysis',
+      7: 'dsa_recurrences',
+      10: 'dsa_master_theorem',
+      11: 'dsa_arrays_buffers',
+      14: 'dsa_deques',
+      15: 'dsa_linked_lists',
+      17: 'dsa_bst',
+      18: 'dsa_avl_trees',
+      21: 'dsa_graphs',
+      22: 'dsa_graph_traversal',
+      25: 'dsa_divide_conquer',
+      27: 'dsa_sorting_bounds',
+      28: 'dsa_backtracking',
+      30: 'dsa_branch_bound',
+      32: 'dsa_greedy_choice',
+      33: 'dsa_mst',
+      35: 'dsa_dp_formulation',
+      37: 'dsa_dp_tabulation',
+      41: 'dsa_shortest_paths',
+      42: 'dsa_network_flows',
+      46: 'dsa_np_reductions',
+      52: 'dsa_approximation',
     },
     physics: { 1: 'phys_force_acceleration', 2: 'phys_potential_kinetic' },
     chemistry: { 1: 'chem_stoichiometry', 2: 'chem_titration_ph' },
@@ -84,13 +126,39 @@ export class MasteryCompressionEngine {
     math_hidden_trial_2: ['math_roots_radicals', 'math_verification'],
     cs_hidden_trial_1: ['cs_arrays_invariants', 'cs_binary_search'],
     cs_hidden_trial_2: ['cs_sorting', 'cs_dynamic_programming'],
+    dsa_hidden_hd1: ['dsa_asymptotics', 'dsa_case_analysis'],
+    dsa_hidden_hd2: ['dsa_recurrences', 'dsa_master_theorem'],
+    dsa_hidden_hd3: ['dsa_arrays_buffers', 'dsa_deques'],
+    dsa_hidden_hd4: ['dsa_linked_lists', 'dsa_stacks'],
+    dsa_hidden_hd5: ['dsa_graphs', 'dsa_graph_traversal'],
+    dsa_hidden_hd6: ['dsa_graphs', 'dsa_graph_traversal'],
+    dsa_hidden_hd7: ['dsa_divide_conquer', 'dsa_sorting_bounds'],
+    dsa_hidden_hd8: ['dsa_backtracking', 'dsa_branch_bound'],
+    dsa_hidden_hd9: ['dsa_greedy_choice', 'dsa_mst'],
+    dsa_hidden_hd10: ['dsa_dp_formulation', 'dsa_dp_tabulation'],
+    dsa_hidden_hd11: ['dsa_shortest_paths', 'dsa_network_flows'],
+    dsa_hidden_hd12: ['dsa_np_reductions', 'dsa_approximation'],
+    hd_dsa_12: ['dsa_np_reductions', 'dsa_approximation'],
   };
 
   // Required hidden trials per subject to achieve full compression
   public static readonly REQUIRED_HIDDEN_TRIALS: Record<SubjectId, string[]> = {
     mathematics: ['math_hidden_trial_1', 'math_hidden_trial_2'],
     computerScience: ['cs_hidden_trial_1', 'cs_hidden_trial_2'],
-    data_structures_algorithms: [],
+    data_structures_algorithms: [
+      'dsa_hidden_hd1',
+      'dsa_hidden_hd2',
+      'dsa_hidden_hd3',
+      'dsa_hidden_hd4',
+      'dsa_hidden_hd5',
+      'dsa_hidden_hd6',
+      'dsa_hidden_hd7',
+      'dsa_hidden_hd8',
+      'dsa_hidden_hd9',
+      'dsa_hidden_hd10',
+      'dsa_hidden_hd11',
+      'dsa_hidden_hd12',
+    ],
     physics: [],
     chemistry: [],
     biology: [],
@@ -124,6 +192,14 @@ export class MasteryCompressionEngine {
       if (mainConcepts[lvl]) {
         demonstrated.add(mainConcepts[lvl]);
         mainSourceCount++;
+      }
+    }
+
+    // For DSA: if cleared level 54 or at least 50 levels, all required concepts demonstrated
+    if (subject === 'data_structures_algorithms') {
+      if (clearedMain.includes(54) || clearedMain.length >= 50) {
+        required.forEach(c => demonstrated.add(c));
+        mainSourceCount = 54;
       }
     }
 
@@ -184,8 +260,16 @@ export class MasteryCompressionEngine {
     const clearedTrials = profile.clearedHiddenTrials?.[subject] || [];
     const requiredTrials = this.REQUIRED_HIDDEN_TRIALS[subject] || [];
 
-    // Main Route: Main Stage 4 completed
-    if (clearedMain.includes(4)) {
+    // Main Route:
+    if (subject === 'data_structures_algorithms') {
+      if (clearedMain.includes(53) || clearedMain.includes(54)) {
+        return {
+          allowed: true,
+          reason: 'The Grand Meridian Stage 53 completed. All 5 Modules demonstrated.',
+          route: 'main',
+        };
+      }
+    } else if (clearedMain.includes(4)) {
       return {
         allowed: true,
         reason: 'The Grand Meridian Stage 4 completed. All curriculum axioms demonstrated.',
@@ -302,6 +386,33 @@ export class MasteryCompressionEngine {
         recommendedMainPathLevel: 4,
         conceptExplanation:
           'You established the ordering, but failed to memoize overlapping subproblem states in the lookup table.',
+      };
+    }
+
+    // 5. Data Structures & Algorithms Hidden Path (HD1 to HD12)
+    if (encounter.subject === 'data_structures_algorithms' && encounter.pathType === 'hidden_trial') {
+      const dsaRemediationMap: Record<string, number[]> = {
+        dsa_hidden_hd1: [1, 2, 3, 4],
+        dsa_hidden_hd2: [5, 6, 7, 8, 9, 10],
+        dsa_hidden_hd3: [11, 12, 13, 14, 15],
+        dsa_hidden_hd4: [16, 17, 18, 19, 20, 24],
+        dsa_hidden_hd5: [21, 22, 23],
+        dsa_hidden_hd6: [25, 26, 27, 28],
+        dsa_hidden_hd7: [29, 30, 31, 32],
+        dsa_hidden_hd8: [33, 34],
+        dsa_hidden_hd9: [35, 36, 37, 38, 39],
+        dsa_hidden_hd10: [45, 46, 47, 48, 49, 50],
+        dsa_hidden_hd11: [51, 52, 53],
+        dsa_hidden_hd12: [10, 24, 34, 43, 50, 54],
+      };
+      const remLevels = dsaRemediationMap[encounter.id] || [1];
+      const recLevel = remLevels[0];
+      return {
+        failedConcept: encounter.conceptName,
+        recommendedMainPathLevel: recLevel,
+        recommendRemediation: true,
+        remediationLevels: remLevels,
+        conceptExplanation: `Crucible synthesis difficulty with ${encounter.conceptName}. Return to Level ${recLevel} on the Grand Meridian to reinforce foundational algorithmic proofs.`,
       };
     }
 

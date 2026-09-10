@@ -10,6 +10,7 @@ import { questionSelectionEngine } from './QuestionSelectionEngine';
 import { QuestionVariant } from '../curriculum/questionPools';
 import { solutionPathEngine, SolutionGraph } from './SolutionPathEngine';
 import { bossAbilityEngine } from './BossAbilityEngine';
+import { learningDNAEngine } from './LearningDNAEngine';
 
 export interface CombatEngineState {
   player: PlayerState;
@@ -50,16 +51,62 @@ export class CombatEngine {
     // 1. Generate & Lock Solution Graph
     this.solutionGraph = solutionPathEngine.generateSolutionGraph(encounter);
 
-    const initialCards = [...encounter.validCards];
-    // Ensure the expected first operation card is present in opening hand
-    const firstExpectedOp = encounter.optimalSequence[0];
-    const neededIdx = initialCards.findIndex(c => c.operationKey === firstExpectedOp);
-    if (neededIdx > 4) {
-      const [neededCard] = initialCards.splice(neededIdx, 1);
-      initialCards.unshift(neededCard);
+    // ANTI-EXPLOIT HAND FAIR SHUFFLE WITH GUARANTEED FIRST-ACTION SOLVABILITY
+    const cardPool = [...encounter.validCards];
+
+    // Ensure all misconception trigger cards exist in card pool if available
+    if (encounter.misconceptions && encounter.misconceptions.length > 0) {
+      for (const misc of encounter.misconceptions) {
+        if (!cardPool.some(c => c.operationKey === misc.triggerOperation)) {
+          const distractorCard: Card = {
+            id: `distractor_${misc.triggerOperation.toLowerCase()}_${Date.now()}`,
+            name: misc.triggerOperation.replace(/_/g, ' '),
+            cost: 1,
+            subject: encounter.subject,
+            rarity: 'common',
+            operationKey: misc.triggerOperation,
+            description: `Alternative conceptual operation for ${encounter.subject}`,
+            effectText: `Execute ${misc.triggerOperation}.`,
+            damage: 25,
+            shield: 5,
+            iconName: 'Sparkles',
+          };
+          cardPool.push(distractorCard);
+        }
+      }
     }
-    const startingHand = initialCards.slice(0, 5);
-    const drawPile = initialCards.slice(5);
+
+    // Identify first required card for the starting hand (guaranteed first-action solvability)
+    const primaryOps = encounter.optimalSequence;
+    const poolRemaining = [...cardPool];
+    const initialHandPool: Card[] = [];
+
+    const firstOp = primaryOps[0];
+    const firstIdx = poolRemaining.findIndex(c => c.operationKey === firstOp);
+    if (firstIdx !== -1) {
+      initialHandPool.push(poolRemaining.splice(firstIdx, 1)[0]);
+    }
+
+    // Shuffle poolRemaining so remaining solution cards and distractors are randomized
+    for (let i = poolRemaining.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [poolRemaining[i], poolRemaining[j]] = [poolRemaining[j], poolRemaining[i]];
+    }
+
+    // Fill up to 5 cards for starting hand from randomized pool
+    while (initialHandPool.length < 5 && poolRemaining.length > 0) {
+      initialHandPool.push(poolRemaining.shift()!);
+    }
+
+    // Fair Fisher-Yates shuffle of starting hand
+    // This distributes the required first action randomly across slots 0..4 (never pinned to slot 0)
+    for (let i = initialHandPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [initialHandPool[i], initialHandPool[j]] = [initialHandPool[j], initialHandPool[i]];
+    }
+
+    const startingHand = initialHandPool;
+    const drawPile = poolRemaining;
 
     // Calculate starting enemy shield including any active danger anomaly
     let initialEnemyShield = 0;
@@ -208,14 +255,21 @@ export class CombatEngine {
     const isCorrect = !!transition?.isValid;
     const expectedOp = this.encounter.optimalSequence[this.state.currentStepIndex] || card.operationKey;
 
-    // Record Telemetry
+    // Record Telemetry with real slot index and verification identification
+    const isVerificationCard =
+      card.operationKey.startsWith('VERIFY_') ||
+      card.operationKey.startsWith('CHECK_') ||
+      card.name.toLowerCase().includes('verify');
+
     const actionItem = telemetry.recordAction(
       this.state.currentStepIndex,
       card.operationKey,
       card.name,
       isCorrect,
       expectedOp,
-      isCorrect ? undefined : 'Misconception Deviation'
+      isCorrect ? undefined : 'Misconception Deviation',
+      cardIndex,
+      isVerificationCard
     );
 
     // Remove from hand, add to discard
@@ -223,7 +277,23 @@ export class CombatEngine {
     this.state.player.hand.splice(cardIndex, 1);
     this.state.player.discardPile.push(card);
 
-    // Record performance internally for danger tracking
+    // Tactical Dispersion: Dynamic pressure shuffles remaining hand slots
+    // and ensures the next solution card is dispersed away from slot 0
+    if (this.state.player.hand.length > 1) {
+      for (let i = this.state.player.hand.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.state.player.hand[i], this.state.player.hand[j]] = [this.state.player.hand[j], this.state.player.hand[i]];
+      }
+      // Tactical counter: Disperse next solution card away from slot 0 to thwart blind macro spamming
+      const nextStepIndex = this.state.currentStepIndex + (isCorrect ? 1 : 0);
+      const nextOp = this.solutionGraph.primaryPath.operations[nextStepIndex];
+      if (nextOp && this.state.player.hand[0]?.operationKey === nextOp) {
+        const otherSlot = 1 + Math.floor(Math.random() * (this.state.player.hand.length - 1));
+        [this.state.player.hand[0], this.state.player.hand[otherSlot]] = [this.state.player.hand[otherSlot], this.state.player.hand[0]];
+      }
+    }
+
+    // Record performance internally for danger tracking & update Learning DNA in real-time
     const conceptKey = this.encounter.conceptName.toLowerCase().replace(/[^a-z0-9]/g, '_');
     try {
       const profile = StorageManager.loadProfile();
@@ -234,6 +304,13 @@ export class CombatEngine {
         this.encounter.conceptName,
         isCorrect ? 'success' : 'mistake'
       );
+      if (profile.learningDNA) {
+        profile.learningDNA = learningDNAEngine.recordActionTelemetry(
+          profile.learningDNA,
+          actionItem,
+          this.solutionGraph.primaryPath.operations.length
+        );
+      }
       StorageManager.saveProfile(profile);
     } catch {
       // In-memory safety
@@ -323,9 +400,8 @@ export class CombatEngine {
 
       // Mutate Enemy with Adaptive Counter-Shield
       this.state.enemy.adaptedModifier = diagnosis.adaptation;
-      if (diagnosis.adaptation.penaltyCost) {
-        this.state.enemy.shield += 15;
-      }
+      const counterShield = (this.encounter.isBoss || this.encounter.pathType === 'hidden_trial') ? 25 : 15;
+      this.state.enemy.shield += counterShield;
 
       // Unlock Secret Echo Dungeon Vault
       if (diagnosis.echoVaultId) {
@@ -334,8 +410,8 @@ export class CombatEngine {
         sounds.playPortalOpen();
       }
 
-      // Enemy Counter-Strike on mistake
-      const recoilDamage = 12;
+      // Enemy Counter-Strike on mistake (scaled for high-stakes boss and hidden mastery trials)
+      const recoilDamage = (this.encounter.pathType === 'hidden_trial' || this.encounter.isBoss) ? 30 : 12;
       this.damagePlayer(recoilDamage);
       this.addLog('enemy', `${this.state.enemy.name} reacted: Deployed ${diagnosis.adaptation.name}!`, 'adapt');
 
@@ -346,10 +422,6 @@ export class CombatEngine {
         return this.state;
       }
     }
-
-    // In-combat Solvability Guarantee Harness:
-    // Ensure state remains solvable from the current hand/draw state!
-    solutionPathEngine.repairUnsolvableState(this.solutionGraph, this.state);
 
     return this.state;
   }
@@ -386,11 +458,23 @@ export class CombatEngine {
     this.state.player.currentEnergy = this.state.player.maxEnergy;
     this.state.player.shield = Math.floor(this.state.player.shield * 0.5); // retain 50% shield
 
-    // Draw cards up to 5
-    while (this.state.player.hand.length < 5) {
+    // PHASE 2: Discard all remaining unplayed cards from hand into discardPile
+    while (this.state.player.hand.length > 0) {
+      this.state.player.discardPile.push(this.state.player.hand.pop()!);
+    }
+
+    // Draw a fresh hand of up to 5 cards from drawPile (rebuilding from discardPile when necessary)
+    const TARGET_HAND_SIZE = 5;
+    while (this.state.player.hand.length < TARGET_HAND_SIZE) {
       if (this.state.player.drawPile.length === 0) {
         if (this.state.player.discardPile.length === 0) break;
-        this.state.player.drawPile = [...this.state.player.discardPile];
+        // Reshuffle discardPile into drawPile
+        const recycled = [...this.state.player.discardPile];
+        for (let i = recycled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [recycled[i], recycled[j]] = [recycled[j], recycled[i]];
+        }
+        this.state.player.drawPile = recycled;
         this.state.player.discardPile = [];
       }
       const drawn = this.state.player.drawPile.pop();

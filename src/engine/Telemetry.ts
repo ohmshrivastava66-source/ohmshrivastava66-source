@@ -11,17 +11,52 @@ export class TelemetryTracker {
     this.encounterStartTime = startTime;
   }
 
+  public resetSession(startTime: number = Date.now()) {
+    this.reset(startTime);
+  }
+
   public recordAction(
-    stepIndex: number,
-    operationKey: string,
-    cardName: string,
-    isExpected: boolean,
-    expectedOperation?: string,
-    deviatedCategory?: string
+    stepIndexOrCardId: number | string,
+    opKeyOrCardName: string,
+    cardNameOrIsExpected: string | boolean,
+    isExpectedOrExpectedOp?: boolean | string,
+    expectedOpOrEqState?: string,
+    deviatedOrSlotIndex?: string | number,
+    slotIndexOrIsVerification?: number | boolean,
+    isVerificationCard?: boolean
   ): ActionTelemetryItem {
     const now = Date.now();
     const timeSinceLast = now - this.lastActionTimestamp;
     this.lastActionTimestamp = now;
+
+    let stepIndex: number;
+    let operationKey: string;
+    let cardName: string;
+    let isExpected: boolean;
+    let expectedOperation: string | undefined;
+    let deviatedCategory: string | undefined;
+    let cardSlotIndex: number | undefined;
+    let isVerification: boolean | undefined;
+
+    if (typeof stepIndexOrCardId === 'number') {
+      stepIndex = stepIndexOrCardId;
+      operationKey = opKeyOrCardName;
+      cardName = typeof cardNameOrIsExpected === 'string' ? cardNameOrIsExpected : 'Card';
+      isExpected = Boolean(isExpectedOrExpectedOp);
+      expectedOperation = typeof expectedOpOrEqState === 'string' ? expectedOpOrEqState : undefined;
+      deviatedCategory = typeof deviatedOrSlotIndex === 'string' ? deviatedOrSlotIndex : undefined;
+      cardSlotIndex = typeof slotIndexOrIsVerification === 'number' ? slotIndexOrIsVerification : undefined;
+      isVerification = isVerificationCard;
+    } else {
+      stepIndex = 0;
+      cardName = opKeyOrCardName;
+      isExpected = Boolean(cardNameOrIsExpected);
+      expectedOperation = typeof isExpectedOrExpectedOp === 'string' ? isExpectedOrExpectedOp : undefined;
+      operationKey = expectedOperation || 'OP';
+      deviatedCategory = typeof expectedOpOrEqState === 'string' ? expectedOpOrEqState : undefined;
+      cardSlotIndex = typeof deviatedOrSlotIndex === 'number' ? deviatedOrSlotIndex : undefined;
+      isVerification = Boolean(slotIndexOrIsVerification);
+    }
 
     const item: ActionTelemetryItem = {
       stepIndex,
@@ -32,6 +67,8 @@ export class TelemetryTracker {
       isExpected,
       expectedOperation,
       deviatedCategory,
+      cardSlotIndex,
+      isVerificationCard: isVerification,
     };
 
     this.actions.push(item);
@@ -51,6 +88,10 @@ export class TelemetryTracker {
         repeatedPatternCount: 0,
         averageResponseTimeMs: 0,
         impulsiveActionDetected: false,
+        cardSlotIndices: [],
+        slotEntropy: 1.0,
+        isRapidExploit: false,
+        behaviorClassification: 'GENUINE_MASTERY',
       };
     }
 
@@ -58,11 +99,35 @@ export class TelemetryTracker {
     const correct = this.actions.filter(a => a.isExpected).length;
     const efficiency = Math.round((correct / total) * 100);
 
-    const totalResponseTime = this.actions.reduce((acc, a) => acc + a.timeSinceLastActionMs, 0);
+    const totalResponseTime = this.actions.reduce((acc, a) => acc + (a.timeSinceLastActionMs ?? 0), 0);
     const avgTime = Math.round(totalResponseTime / total);
 
-    // Check for impulsive clicking (actions < 1200ms)
-    const impulsive = this.actions.some(a => a.timeSinceLastActionMs < 1200 && !a.isExpected);
+    // Impulsive pacing: action executed in < 1000ms
+    const impulsive = this.actions.some(a => (a.timeSinceLastActionMs ?? 0) < 1000);
+
+    // Card slot tracking and entropy calculation
+    const slotIndices = this.actions
+      .map(a => a.cardSlotIndex)
+      .filter((s): s is number => s !== undefined);
+
+    let slotEntropy = 1.0;
+    if (slotIndices.length > 1) {
+      const freqMap: Record<number, number> = {};
+      slotIndices.forEach(s => {
+        freqMap[s] = (freqMap[s] || 0) + 1;
+      });
+      const probs = Object.values(freqMap).map(count => count / slotIndices.length);
+      // Normalized Shannon Entropy (0 = identical slot every time, 1 = maximum variety)
+      const rawEntropy = -probs.reduce((sum, p) => sum + (p > 0 ? p * Math.log2(p) : 0), 0);
+      const maxPossibleEntropy = Math.log2(Math.min(5, slotIndices.length)) || 1;
+      slotEntropy = Number((rawEntropy / maxPossibleEntropy).toFixed(3));
+    }
+
+    // Repeated slot spam exploit: >=3 actions, avg latency < 1400ms, and slotEntropy <= 0.2
+    const isRapidExploit =
+      slotIndices.length >= 3 &&
+      avgTime < 1400 &&
+      slotEntropy <= 0.25;
 
     // Check for repeated mistakes with same operation
     const mistakes = this.actions.filter(a => !a.isExpected);
@@ -76,6 +141,20 @@ export class TelemetryTracker {
       validity = 'DEVIATED';
     }
 
+    // Behavioral classification
+    let behaviorClassification: LiveTelemetryMetrics['behaviorClassification'] = 'GENUINE_MASTERY';
+    if (isRapidExploit) {
+      behaviorClassification = 'RAPID_PATTERN_EXPLOIT';
+    } else if (slotEntropy >= 0.70 && !isRapidExploit) {
+      behaviorClassification = 'DELIBERATE_METHODICAL';
+    } else if (efficiency >= 80 && avgTime < 3000 && slotEntropy >= 0.5) {
+      behaviorClassification = 'FAST_RELIABLE_REASONING';
+    } else if (efficiency >= 85 && avgTime >= 1500) {
+      behaviorClassification = 'GENUINE_MASTERY';
+    } else {
+      behaviorClassification = 'UNCERTAIN_MASTERY';
+    }
+
     return {
       sequencingEfficiency: Math.max(10, efficiency),
       dependencyTrackingScore: Math.max(20, Math.round(100 - (mistakes.length * 25))),
@@ -83,11 +162,15 @@ export class TelemetryTracker {
       repeatedPatternCount: hasRepeated ? 2 : mistakes.length > 0 ? 1 : 0,
       averageResponseTimeMs: avgTime,
       impulsiveActionDetected: impulsive,
+      cardSlotIndices: slotIndices,
+      slotEntropy,
+      isRapidExploit,
+      behaviorClassification,
     };
   }
 
   public getElapsedTimeSeconds(): number {
-    return Math.round((Date.now() - this.encounterStartTime) / 1000);
+    return Math.max(1, Math.round((Date.now() - this.encounterStartTime) / 1000));
   }
 }
 

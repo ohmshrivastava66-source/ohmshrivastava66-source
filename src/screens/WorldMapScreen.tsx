@@ -52,6 +52,9 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
   const mainLevels = subjectInfo.levels.filter(lvl => lvl.pathType !== 'hidden_trial');
   const hiddenTrials = subjectInfo.levels.filter(lvl => lvl.pathType === 'hidden_trial');
 
+  const isDSA = subject === 'data_structures_algorithms';
+  const showCrucible = hiddenTrials.length > 0 && (!isDSA || !!profile.dsaHiddenPathDiscovered);
+
   const progressPercent = Math.round(
     (clearedLevels.length / Math.max(1, mainLevels.length)) * 100
   );
@@ -138,9 +141,9 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
 
       {/* DUAL PROGRESSION PATHS: GRAND MERIDIAN & CRUCIBLE */}
       <main className="z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start my-auto">
-        {/* ROUTE 1: THE GRAND MERIDIAN (MAIN PATH - 7 COLS) */}
+        {/* ROUTE 1: THE GRAND MERIDIAN (MAIN PATH - 7 or 12 COLS) */}
         <section
-          className="lg:col-span-7 glass-panel p-5 sm:p-6 rounded-3xl border border-slate-700/80 shadow-2xl flex flex-col gap-4 relative overflow-hidden"
+          className={`${showCrucible ? 'lg:col-span-7' : 'lg:col-span-12'} glass-panel p-5 sm:p-6 rounded-3xl border border-slate-700/80 shadow-2xl flex flex-col gap-4 relative overflow-hidden`}
           aria-label="Grand Meridian Progressive Path"
         >
           <div className="flex items-center justify-between border-b border-slate-800/90 pb-2.5">
@@ -266,136 +269,144 @@ export const WorldMapScreen: React.FC<WorldMapScreenProps> = ({
         </section>
 
         {/* ROUTE 2: CRUCIBLE OF COMPRESSION (HIDDEN PATH - 5 COLS) */}
-        <section
-          className="lg:col-span-5 glass-panel p-5 sm:p-6 rounded-3xl border border-purple-500/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden bg-gradient-to-b from-purple-950/20 via-slate-950 to-slate-950"
-          aria-label="Crucible of Compression Hidden Path"
-        >
-          <div className="flex items-center justify-between border-b border-purple-500/30 pb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-xl bg-purple-950/90 border border-purple-500/50 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.4)]">
-                <Sparkles className="w-4 h-4" />
-              </span>
-              <div>
-                <h3 className="font-cinzel font-bold text-sm sm:text-base text-purple-100">
-                  CRUCIBLE OF COMPRESSION
-                </h3>
-                <p className="text-[10px] text-purple-300 font-mono-code">
-                  Hidden Path • Multi-Concept Synthesis
-                </p>
+        {showCrucible && (
+          <section
+            className="lg:col-span-5 glass-panel p-5 sm:p-6 rounded-3xl border border-purple-500/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden bg-gradient-to-b from-purple-950/20 via-slate-950 to-slate-950"
+            aria-label="Crucible of Compression Hidden Path"
+          >
+            <div className="flex items-center justify-between border-b border-purple-500/30 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-xl bg-purple-950/90 border border-purple-500/50 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.4)]">
+                  <Sparkles className="w-4 h-4" />
+                </span>
+                <div>
+                  <h3 className="font-cinzel font-bold text-sm sm:text-base text-purple-100">
+                    CRUCIBLE OF COMPRESSION
+                  </h3>
+                  <p className="text-[10px] text-purple-300 font-mono-code">
+                    Hidden Path • Multi-Concept Synthesis
+                  </p>
+                </div>
               </div>
+              <span className="text-[10px] font-mono-code text-purple-300 bg-purple-950/70 px-2 py-0.5 rounded-full border border-purple-700/60 font-bold">
+                {hiddenTrials.length} DENSE TRIALS
+              </span>
             </div>
-            <span className="text-[10px] font-mono-code text-purple-300 bg-purple-950/70 px-2 py-0.5 rounded-full border border-purple-700/60 font-bold">
-              2 DENSE TRIALS
-            </span>
-          </div>
 
-          <p className="text-xs text-slate-300 italic leading-relaxed">
-            Prove multi-concept mastery simultaneously to unlock the Sovereign encounter directly.
-          </p>
+            <p className="text-xs text-slate-300 italic leading-relaxed">
+              Prove multi-concept mastery simultaneously to unlock the Sovereign encounter directly.
+            </p>
 
-          <div className="flex flex-col gap-3">
-            {hiddenTrials.map((trial, index) => {
-              const isCleared = clearedTrials.includes(trial.id);
-              const isUnlocked = StorageManager.isLevelUnlocked(subject, trial.id, profile, activeC?.id, activeK?.id);
+            <div className="flex flex-col gap-3">
+              {hiddenTrials.map((trial, index) => {
+                const isCleared = clearedTrials.includes(trial.id);
+                const isUnlocked = StorageManager.isLevelUnlocked(subject, trial.id, profile, activeC?.id, activeK?.id);
 
-              let cardStyle =
-                'border-slate-800 bg-slate-900/50 text-slate-500 opacity-60 cursor-not-allowed';
-              if (isCleared) {
-                cardStyle =
-                  'border-emerald-500/70 bg-gradient-to-r from-emerald-950/70 to-slate-900/80 text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.3)] cursor-pointer hover:scale-[1.02]';
-              } else if (isUnlocked) {
-                cardStyle =
-                  'border-purple-500 bg-gradient-to-r from-purple-950/80 to-slate-900/90 text-purple-100 shadow-[0_0_22px_rgba(168,85,247,0.5)] animate-pulse cursor-pointer hover:scale-[1.02]';
-              }
+                let cardStyle =
+                  'border-slate-800 bg-slate-900/50 text-slate-500 opacity-60 cursor-not-allowed';
+                if (isCleared) {
+                  cardStyle =
+                    'border-emerald-500/70 bg-gradient-to-r from-emerald-950/70 to-slate-900/80 text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.3)] cursor-pointer hover:scale-[1.02]';
+                } else if (isUnlocked) {
+                  cardStyle =
+                    'border-purple-500 bg-gradient-to-r from-purple-950/80 to-slate-900/90 text-purple-100 shadow-[0_0_22px_rgba(168,85,247,0.5)] animate-pulse cursor-pointer hover:scale-[1.02]';
+                }
 
-              return (
-                <div
-                  key={trial.id}
-                  role="button"
-                  tabIndex={isUnlocked ? 0 : -1}
-                  onClick={() => handleLevelClick(trial.id, trial.levelNumber)}
-                  onKeyDown={e =>
-                    (e.key === 'Enter' || e.key === ' ') &&
-                    handleLevelClick(trial.id, trial.levelNumber)
-                  }
-                  className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 flex flex-col gap-2 min-h-[48px] ${cardStyle}`}
-                  aria-label={`${trial.title} ${isCleared ? 'Cleared' : isUnlocked ? 'Unlocked' : 'Locked'}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-cinzel font-bold text-xs ${
-                          isCleared
-                            ? 'bg-emerald-900 border border-emerald-400 text-emerald-300'
-                            : isUnlocked
-                            ? 'bg-purple-900 border border-purple-400 text-purple-200'
-                            : 'bg-slate-900 border border-slate-700 text-slate-500'
-                        }`}
-                      >
-                        {isCleared ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        ) : (
-                          `T${index + 1}`
-                        )}
+                return (
+                  <div
+                    key={trial.id}
+                    role="button"
+                    tabIndex={isUnlocked ? 0 : -1}
+                    onClick={() => handleLevelClick(trial.id, trial.levelNumber)}
+                    onKeyDown={e =>
+                      (e.key === 'Enter' || e.key === ' ') &&
+                      handleLevelClick(trial.id, trial.levelNumber)
+                    }
+                    className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 flex flex-col gap-2 min-h-[48px] ${cardStyle}`}
+                    aria-label={`${trial.title} ${isCleared ? 'Cleared' : isUnlocked ? 'Unlocked' : 'Locked'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-cinzel font-bold text-xs ${
+                            isCleared
+                              ? 'bg-emerald-900 border border-emerald-400 text-emerald-300'
+                              : isUnlocked
+                              ? 'bg-purple-900 border border-purple-400 text-purple-200'
+                              : 'bg-slate-900 border border-slate-700 text-slate-500'
+                          }`}
+                        >
+                          {isCleared ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : trial.isBoss ? (
+                            <Crown className="w-3.5 h-3.5 text-rose-400" />
+                          ) : (
+                            `T${index + 1}`
+                          )}
+                        </div>
+                        <span className="font-cinzel font-bold text-xs sm:text-sm text-slate-100">
+                          {trial.title}
+                        </span>
                       </div>
-                      <span className="font-cinzel font-bold text-xs sm:text-sm text-slate-100">
-                        {trial.title}
-                      </span>
+
+                      {isCleared ? (
+                        <span className="text-[10px] font-mono-code font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700">
+                          COMPRESSED
+                        </span>
+                      ) : isUnlocked ? (
+                        <span className="text-[10px] font-mono-code font-bold text-purple-300 px-2 py-0.5 rounded bg-purple-950 border border-purple-700">
+                          AVAILABLE
+                        </span>
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-slate-500" />
+                      )}
                     </div>
 
-                    {isCleared ? (
-                      <span className="text-[10px] font-mono-code font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700">
-                        COMPRESSED
-                      </span>
-                    ) : isUnlocked ? (
-                      <span className="text-[10px] font-mono-code font-bold text-purple-300 px-2 py-0.5 rounded bg-purple-950 border border-purple-700">
-                        AVAILABLE
-                      </span>
-                    ) : (
-                      <Lock className="w-3.5 h-3.5 text-slate-500" />
-                    )}
-                  </div>
+                    {/* Compressed Concept Badges */}
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {(trial.compressedConcepts || []).map((concept, i) => (
+                        <span
+                          key={i}
+                          className="text-[9px] font-mono-code px-2 py-0.5 rounded bg-slate-950/80 border border-purple-700/50 text-purple-300"
+                        >
+                          {concept.replace(/_/g, ' ')}
+                        </span>
+                      ))}
+                    </div>
 
-                  {/* Compressed Concept Badges */}
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {(trial.compressedConcepts || []).map((concept, i) => (
-                      <span
-                        key={i}
-                        className="text-[9px] font-mono-code px-2 py-0.5 rounded bg-slate-950/80 border border-purple-700/50 text-purple-300"
-                      >
-                        {concept.replace(/_/g, ' ')}
-                      </span>
-                    ))}
+                    <div className="text-[10px] font-mono-code text-amber-300 flex items-center gap-1 border-t border-purple-500/20 pt-1.5 mt-1">
+                      <Award className="w-3 h-3 text-amber-400" />
+                      Mastery Trial: {trial.topic}
+                    </div>
                   </div>
-
-                  <div className="text-[10px] font-mono-code text-amber-300 flex items-center gap-1 border-t border-purple-500/20 pt-1.5 mt-1">
-                    <Award className="w-3 h-3 text-amber-400" />
-                    Mastery Trial: {trial.topic}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Final Boss Access Status Banner */}
-          <div
-            className={`p-3 rounded-2xl border text-xs flex items-center justify-between mt-auto ${
-              bossAccess
-                ? 'bg-amber-950/40 border-amber-500/50 text-amber-200'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Crown
-                className={`w-4 h-4 ${bossAccess ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`}
-              />
-              <span className="font-cinzel font-bold text-xs">Sovereign Gate Access:</span>
+                );
+              })}
             </div>
-            <span className="font-mono-code font-bold text-[11px]">
-              {bossAccess ? 'UNLOCKED' : 'LOCKED (Clear Stage 4 or Trials 1+2)'}
-            </span>
-          </div>
-        </section>
+
+            {/* Final Boss Access Status Banner */}
+            <div
+              className={`p-3 rounded-2xl border text-xs flex items-center justify-between mt-auto ${
+                bossAccess.allowed
+                  ? 'bg-amber-950/40 border-amber-500/50 text-amber-200'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Crown
+                  className={`w-4 h-4 ${bossAccess.allowed ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`}
+                />
+                <span className="font-cinzel font-bold text-xs">Sovereign Gate Access:</span>
+              </div>
+              <span className="font-mono-code font-bold text-[11px]">
+                {bossAccess.allowed
+                  ? 'UNLOCKED'
+                  : isDSA
+                  ? 'LOCKED (Clear Level 53 or 12 Hidden Trials)'
+                  : 'LOCKED (Clear Stage 4 or Trials 1+2)'}
+              </span>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* FOOTER ACTION */}

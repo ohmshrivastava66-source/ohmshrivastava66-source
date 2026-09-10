@@ -77,9 +77,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const finalReflectionActive = LearningProfileTranslator.hasFinalReflection(profile);
 
   // Realm Boss Record
+  const defeatedCouncilBossCount = LearningProfileTranslator.getDefeatedCouncilBossCount(profile);
   const defeatedBossCount = LearningProfileTranslator.getDefeatedBossCount(profile);
   const canonicalRealms = Object.keys(REALM_BOSS_LEVELS) as CanonicalRealmId[];
   const allSubjects = Object.keys(ALL_SUBJECTS) as SubjectId[];
+  const masterySubjects: SubjectId[] = [...canonicalRealms, 'data_structures_algorithms'];
 
   // Realm Conqueror designations (only show legitimately earned titles)
   const realmConquerorBadges: { subject: string; title: string; color: string }[] = [];
@@ -102,6 +104,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       subject: 'Physics',
       title: 'Entropy Sovereign',
       color: '#f59e0b',
+    });
+  }
+  if (LearningProfileTranslator.isBossDefeated(profile, 'data_structures_algorithms')) {
+    realmConquerorBadges.push({
+      subject: 'Data Structures & Algorithms',
+      title: 'Sovereign of Computational Boundaries',
+      color: '#10b981',
+    });
+  }
+  if (profile.dsaHiddenPathBossDefeated) {
+    realmConquerorBadges.push({
+      subject: 'The Algorithmic Crucible',
+      title: 'The Algorithmic Ascension',
+      color: '#a855f7',
     });
   }
 
@@ -127,6 +143,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   }
   if (profile.surpriseAttacksCompleted && !earnedPrestigeTitles.includes('Apex Invariant')) {
     earnedPrestigeTitles.push('Apex Invariant');
+  }
+  if (profile.dsaHiddenPathBossDefeated && !earnedPrestigeTitles.includes('Apex Algorithmic Sovereign')) {
+    earnedPrestigeTitles.push('Apex Algorithmic Sovereign');
   }
 
   // Hidden Mastery Achievements
@@ -163,6 +182,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       subject: 'Computer Science',
       rewardRelic: 'Quantum Cache',
       title: 'Entropy Compressor',
+    });
+  }
+  if (profile.dsaHiddenPathClearedLevels && profile.dsaHiddenPathClearedLevels.length > 0) {
+    profile.dsaHiddenPathClearedLevels.forEach(lvl => {
+      clearedHiddenTrialsList.push({
+        id: `dsa_hd_${lvl}`,
+        name: `HD${lvl - 100} — Compression Trial`,
+        subject: 'Data Structures & Algorithms',
+        rewardRelic: lvl === 112 ? 'Ascension Glyph' : undefined,
+        title: lvl === 112 ? 'Apex Algorithmic Sovereign' : undefined,
+      });
     });
   }
 
@@ -352,18 +382,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             RIGHT COLUMN: REALM MASTERY, SOVEREIGNS, LEARNING PROFILE & HUNTER'S RECORD (lg:col-span-7)
             ========================================================================= */}
         <section className="lg:col-span-7 flex flex-col gap-6" aria-label="Mastery and Achievements">
-          {/* REALM MASTERY INDICES (All 8 realms) */}
+          {/* REALM MASTERY INDICES (All realms including DSA) */}
           <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col gap-3 shadow-lg">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <h3 className="font-cinzel font-bold text-sm text-slate-100 uppercase tracking-wider flex items-center gap-2">
                 <Award className="w-4 h-4 text-cyan-400" />
                 Realm Mastery Indices
               </h3>
-              <span className="text-[11px] font-mono-code text-slate-400">8 Domains Active</span>
+              <span className="text-[11px] font-mono-code text-slate-400">
+                {masterySubjects.length} Domains Active
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-              {canonicalRealms.map(subjId => {
+              {masterySubjects.map(subjId => {
                 const subj = ALL_SUBJECTS[subjId];
                 const mastery = profile.subjectMastery[subjId] || 0;
                 const isBossDefeated = LearningProfileTranslator.isBossDefeated(profile, subjId);
@@ -421,7 +453,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 Realm Sovereign Record
               </h3>
               <span className="text-[11px] font-mono-code text-cyan-300 font-bold">
-                {`${defeatedBossCount} / 8 Defeated`}
+                {`${defeatedCouncilBossCount} / 8 Defeated`}
               </span>
             </div>
 
@@ -477,6 +509,60 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </div>
                 );
               })}
+
+              {/* DSA Sovereign: The Turing Archon (Level 54) */}
+              {(() => {
+                const isDsaDefeated = LearningProfileTranslator.isBossDefeated(profile, 'data_structures_algorithms');
+                const isDsaUnlocked = StorageManager.isLevelUnlocked('data_structures_algorithms', 54, profile);
+                return (
+                  <div
+                    key="dsa_sovereign"
+                    className={`p-3 rounded-2xl border flex items-center justify-between text-xs transition-colors sm:col-span-2 ${
+                      isDsaDefeated
+                        ? 'bg-emerald-950/25 border-emerald-500/50 text-emerald-200'
+                        : isDsaUnlocked
+                        ? 'bg-slate-950/70 border-emerald-800/40 text-slate-300'
+                        : 'bg-slate-950/30 border-slate-900 text-slate-400'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className="w-6 h-6 rounded-lg flex items-center justify-center font-mono-code font-bold text-xs flex-shrink-0"
+                        style={{ backgroundColor: '#10b98122', color: '#10b981' }}
+                      >
+                        ⚙
+                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-cinzel font-bold truncate text-slate-100 flex items-center gap-1.5">
+                          The Turing Archon
+                          <span className="text-[9px] font-mono-code px-1 rounded bg-slate-900 border border-emerald-500/30 text-emerald-400">
+                            LVL 54
+                          </span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 truncate">
+                          Data Structures &amp; Algorithms • Sovereign of Computational Boundaries
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 ml-2">
+                      {isDsaDefeated ? (
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-900/60 border border-emerald-500/50 text-[10px] font-mono-code font-bold text-emerald-300 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" /> DEFEATED
+                        </span>
+                      ) : isDsaUnlocked ? (
+                        <span className="px-2 py-0.5 rounded-md bg-amber-950/40 border border-amber-600/40 text-[10px] font-mono-code text-amber-300 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> IN PROGRESS
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[10px] font-mono-code text-slate-400 flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> LOCKED
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -585,7 +671,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <p className="text-[11px] text-slate-400">Total bosses overcome</p>
                 </div>
                 <span className="text-lg font-mono-code font-bold text-cyan-300">
-                  {defeatedBossCount} / 8
+                  {defeatedCouncilBossCount} / 8
                 </span>
               </div>
 
@@ -687,6 +773,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       Examination Score: {profile.convergenceBestScore}
                     </div>
                   ) : null}
+                </div>
+              )}
+
+              {/* DISCOVERY GATE: DSA Hidden Path (Crucible of Compression) */}
+              {profile.dsaHiddenPathDiscovered && (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/30 via-slate-950 to-indigo-950/30 border border-purple-500/40 sm:col-span-2 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-cinzel font-bold text-purple-200 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-purple-400" /> Hidden Path Discovered: The Algorithmic Crucible
+                    </span>
+                    <span className="text-[10px] font-mono-code px-2 py-0.5 rounded font-bold uppercase bg-purple-950 text-purple-300 border border-purple-700">
+                      Mastery Synthesis
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-mono-code text-slate-300 mt-1">
+                    <span>Compression Trials: {profile.dsaHiddenPathClearedLevels?.length || 0} / 12</span>
+                    <span className={profile.dsaHiddenPathBossDefeated ? 'text-amber-400 font-bold' : 'text-slate-400'}>
+                      The Algorithmic Ascension: {profile.dsaHiddenPathBossDefeated ? 'Conquered' : 'Not Yet Conquered'}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -835,16 +941,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       eventBadge = 'AMBUSH';
                     } else if (run.levelTitle.includes('[THE CONVERGENCE]') && convergenceDiscovered) {
                       eventBadge = 'CONVERGENCE';
-                    } else if (run.levelTitle.toLowerCase().includes('trial') || run.levelNumber > 100) {
+                    } else if (run.levelTitle.toLowerCase().includes('trial') || (run.levelNumber > 100 && run.levelNumber !== 112)) {
                       eventBadge = 'TRIAL';
-                    } else if (run.levelNumber === 5 || run.levelTitle.toLowerCase().includes('archon')) {
-                      eventBadge = 'BOSS';
+                    } else if (run.levelNumber === 54 || run.levelNumber === 112 || run.levelNumber === 5 || run.levelTitle.toLowerCase().includes('archon') || run.levelTitle.toLowerCase().includes('ascension')) {
+                      eventBadge = 'SOVEREIGN';
                     }
+
+                    const displayRealmName = run.subject === 'data_structures_algorithms' ? 'DSA' : (ALL_SUBJECTS[run.subject]?.name || run.subject);
 
                     return (
                       <tr key={run.id} className="border-b border-slate-900/70 hover:bg-slate-900/40 transition-colors">
                         <td className="py-2.5 text-[11px] text-slate-400">{run.date}</td>
-                        <td className="py-2.5 capitalize text-slate-200 font-semibold">{run.subject}</td>
+                        <td className="py-2.5 text-slate-200 font-semibold">{displayRealmName}</td>
                         <td className="py-2.5 flex items-center gap-2">
                           <span className="truncate max-w-[280px]">{run.levelTitle}</span>
                           {eventBadge && (

@@ -399,26 +399,33 @@ export class SolutionPathEngine {
 
     // Physics Newton Laws:
     // Primary: ISOLATE_VARIABLE -> COMPUTE -> VERIFY
-    // Alt: COMPUTE -> VERIFY
+    // Alt: RESOLVE_FORCES -> COMPUTE -> VERIFY
     if (subj === 'physics') {
       alts.push({
         id: 'path_alt_direct_substitution',
-        name: 'Method B: Direct Scalar Calculation',
-        operations: ['COMPUTE', 'VERIFY'],
-        states: [eq, 'a = 20 / 5 = 4 m/s²', encounter.targetState],
-        educationalMethod: 'Direct Scalar Substitution',
+        name: 'Method B: Direct Vector Resolution',
+        operations: ['RESOLVE_FORCES', 'COMPUTE', 'VERIFY'],
+        states: [eq, 'F_net isolated along 1D axis: Net force = 20 N.', 'a = 20 / 5 = 4 m/s²', encounter.targetState],
+        educationalMethod: 'Direct Vector Resolution',
         difficulty: 1,
         completionCondition: encounter.targetState,
         transformations: [
           {
             stepIndex: 0,
-            operationKey: 'COMPUTE',
-            resultingState: 'a = 20 / 5 = 4 m/s²',
-            explanation: 'Substituted directly into scalar formula.',
-            damageValue: 50,
+            operationKey: 'RESOLVE_FORCES',
+            resultingState: 'F_net isolated along 1D axis: Net force = 20 N.',
+            explanation: 'Decomposed vectors along coordinate axis.',
+            damageValue: 35,
           },
           {
             stepIndex: 1,
+            operationKey: 'COMPUTE',
+            resultingState: 'a = 20 / 5 = 4 m/s²',
+            explanation: 'Substituted directly into scalar formula.',
+            damageValue: 45,
+          },
+          {
+            stepIndex: 2,
             operationKey: 'VERIFY',
             resultingState: encounter.targetState,
             explanation: 'Dimensional analysis verified.',
@@ -607,7 +614,8 @@ export class SolutionPathEngine {
       const removed = state.player.hand.pop()!;
       state.player.drawPile.unshift(removed);
     }
-    state.player.hand.unshift(neededCard);
+    const targetSlot = Math.floor(Math.random() * (state.player.hand.length + 1));
+    state.player.hand.splice(targetSlot, 0, neededCard);
 
     // Ensure all subsequent operations in the primary path exist in deck (hand, draw, or discard)
     for (let step = 1; step < graph.primaryPath.operations.length; step++) {
@@ -805,7 +813,7 @@ export class SolutionPathEngine {
     state: CombatEngineState
   ): { state: CombatEngineState; repaired: boolean; actionTaken?: string } {
     const report = this.validateSolvability(graph, state);
-    if (report.solvable && report.reachableFirstActions.length > 0) {
+    if (report.solvable) {
       return { state, repaired: false };
     }
 
@@ -833,61 +841,38 @@ export class SolutionPathEngine {
       }
     }
 
-    // 3. If missing the needed card in hand, swap it into hand from deck or synthesize!
-    const targetFirstOp = graph.primaryPath.operations[state.currentStepIndex] || graph.primaryPath.operations[0];
-    const drawIdx = state.player.drawPile.findIndex(c => c.operationKey === targetFirstOp);
-    if (drawIdx !== -1) {
-      const [card] = state.player.drawPile.splice(drawIdx, 1);
-      state.player.hand.unshift(card);
-      return { state, repaired: true, actionTaken: 'swap_card_to_hand' };
-    }
-
-    const discIdx = state.player.discardPile.findIndex(c => c.operationKey === targetFirstOp);
-    if (discIdx !== -1) {
-      const [card] = state.player.discardPile.splice(discIdx, 1);
-      state.player.hand.unshift(card);
-      return { state, repaired: true, actionTaken: 'swap_card_to_hand' };
-    }
-
-    // Synthesize missing card to guarantee solvability
-    const synthesizedCard: Card = {
-      id: `repaired_${targetFirstOp.toLowerCase()}_${Date.now()}`,
-      name: targetFirstOp.replace(/_/g, ' '),
-      cost: 1,
-      subject: graph.subject,
-      rarity: 'common',
-      operationKey: targetFirstOp,
-      description: `Repaired foundational step for ${graph.subject}`,
-      effectText: `Execute ${targetFirstOp} step. Deals 30 DMG & shields 10.`,
-      damage: 30,
-      shield: 10,
-      iconName: 'Sparkles',
-    };
-    state.player.hand.unshift(synthesizedCard);
-
-    // Ensure subsequent cards in path exist in drawPile
-    for (let step = state.currentStepIndex + 1; step < graph.primaryPath.operations.length; step++) {
+    // 3. Only repair when a required operation is genuinely lost or destroyed from ALL legitimate player zones:
+    // (hand, drawPile, and discardPile).
+    // NEVER synthesize or inject a card into the active hand! Cards are placed into drawPile so normal deck cycling determines availability.
+    let synthesizedAny = false;
+    for (let step = state.currentStepIndex; step < graph.primaryPath.operations.length; step++) {
       const neededOp = graph.primaryPath.operations[step];
       const exists = state.player.hand.some(c => c.operationKey === neededOp) ||
                      state.player.drawPile.some(c => c.operationKey === neededOp) ||
                      state.player.discardPile.some(c => c.operationKey === neededOp);
       if (!exists) {
         state.player.drawPile.push({
-          id: `repaired_draw_${neededOp.toLowerCase()}_${step}`,
+          id: `repaired_draw_${neededOp.toLowerCase()}_${Date.now()}_${step}`,
           name: neededOp.replace(/_/g, ' '),
           cost: 1,
           subject: graph.subject,
           rarity: 'common',
           operationKey: neededOp,
-          description: `Repaired path card for ${graph.subject}`,
+          description: `Repaired foundational step for ${graph.subject}`,
           effectText: `Execute ${neededOp} step. Deals 35 DMG & shields 10.`,
           damage: 35,
           shield: 10,
-          iconName: 'CheckCircle',
+          iconName: 'Sparkles',
         });
+        synthesizedAny = true;
       }
     }
-    return { state, repaired: true, actionTaken: 'synthesize_missing_cards' };
+
+    if (synthesizedAny) {
+      return { state, repaired: true, actionTaken: 'synthesize_missing_cards_to_draw_pile' };
+    }
+
+    return { state, repaired: false };
   }
 
   /**

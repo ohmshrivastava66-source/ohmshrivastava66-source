@@ -8,6 +8,7 @@ import { DEFAULT_LEARNING_DNA, learningDNAEngine } from '../engine/LearningDNAEn
 import { DEFAULT_OBSERVER_STATE, observerEngine } from '../engine/ObserverEngine';
 import { DEFAULT_MIRROR_STATE } from '../engine/MirrorBossEngine';
 import { EndingVariant } from '../types/learningDna';
+import { telemetry } from '../engine/Telemetry';
 
 const STORAGE_KEY = 'algo_spire_profile_v1';
 const SETTINGS_KEY = 'algo_spire_settings_v1';
@@ -81,6 +82,11 @@ const DEFAULT_PROFILE: PlayerProfile = {
   learningDNA: { ...DEFAULT_LEARNING_DNA },
   observerState: { ...DEFAULT_OBSERVER_STATE },
   mirrorBossState: { ...DEFAULT_MIRROR_STATE },
+  dsaHiddenPathDiscovered: false,
+  dsaHiddenPathClearedLevels: [],
+  dsaHiddenPathBossDefeated: false,
+  behaviorClassification: 'GENUINE_MASTERY',
+  exploitStreakCount: 0,
 };
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -152,6 +158,11 @@ export class StorageManager {
             observerState: parsed.observerState ? { ...DEFAULT_OBSERVER_STATE, ...parsed.observerState } : { ...DEFAULT_OBSERVER_STATE },
             mirrorBossState: parsed.mirrorBossState ? { ...DEFAULT_MIRROR_STATE, ...parsed.mirrorBossState } : { ...DEFAULT_MIRROR_STATE },
             lastQuestionResult: parsed.lastQuestionResult,
+            dsaHiddenPathDiscovered: parsed.dsaHiddenPathDiscovered ?? false,
+            dsaHiddenPathClearedLevels: parsed.dsaHiddenPathClearedLevels ? [...parsed.dsaHiddenPathClearedLevels] : [],
+            dsaHiddenPathBossDefeated: parsed.dsaHiddenPathBossDefeated ?? false,
+            behaviorClassification: parsed.behaviorClassification ?? 'GENUINE_MASTERY',
+            exploitStreakCount: parsed.exploitStreakCount ?? 0,
           };
         }
       }
@@ -192,9 +203,23 @@ export class StorageManager {
     xpGained: number,
     masteryGained: number,
     unlockedCardId?: string,
-    encounter?: EncounterDefinition
+    encounter?: EncounterDefinition,
+    realElapsedSeconds?: number,
+    turnsUsed?: number
   ): PlayerProfile {
     let profile = this.loadProfile();
+
+    const liveMetrics = telemetry.getLiveMetrics();
+    const actualTime = Math.max(1, realElapsedSeconds !== undefined ? realElapsedSeconds : telemetry.getElapsedTimeSeconds());
+    const actualTurns = Math.max(1, turnsUsed !== undefined ? turnsUsed : 3);
+
+    // Update behavioral classification and exploit streak
+    profile.behaviorClassification = liveMetrics.behaviorClassification;
+    if (liveMetrics.isRapidExploit) {
+      profile.exploitStreakCount = (profile.exploitStreakCount || 0) + 1;
+    } else {
+      profile.exploitStreakCount = Math.max(0, (profile.exploitStreakCount || 0) - 1);
+    }
 
     // Check if this is a Hidden Path compressed trial
     if (encounter && encounter.pathType === 'hidden_trial') {
@@ -207,14 +232,25 @@ export class StorageManager {
         levelTitle,
         result: 'VICTORY',
         score: (xpGained + (encounter.prestigeRewards?.bonusXp || 0)) * 10,
-        timeTakenSeconds: 45,
+        timeTakenSeconds: actualTime,
         date: new Date().toLocaleDateString(),
-        turnsUsed: 3,
+        turnsUsed: actualTurns,
       };
       profile.runHistory.unshift(run);
       if (profile.runHistory.length > 20) profile.runHistory.pop();
 
       dangerEngine.applyRecencyDecay(profile);
+
+      // Update Learning DNA
+      const currentDna = profile.learningDNA || { ...DEFAULT_LEARNING_DNA };
+      profile.learningDNA = learningDNAEngine.recordRunOutcome(
+        currentDna,
+        'VICTORY',
+        actualTime,
+        actualTurns,
+        true
+      );
+
       this.saveProfile(profile);
       return profile;
     }
@@ -267,9 +303,9 @@ export class StorageManager {
       levelTitle,
       result: 'VICTORY',
       score: xpGained * 10,
-      timeTakenSeconds: 45,
+      timeTakenSeconds: actualTime,
       date: new Date().toLocaleDateString(),
-      turnsUsed: 3,
+      turnsUsed: actualTurns,
     };
     profile.runHistory.unshift(run);
     if (profile.runHistory.length > 20) profile.runHistory.pop();
@@ -282,8 +318,8 @@ export class StorageManager {
     profile.learningDNA = learningDNAEngine.recordRunOutcome(
       currentDna,
       'VICTORY',
-      45,
-      3,
+      actualTime,
+      actualTurns,
       encounter?.pathType === 'hidden_trial'
     );
 
@@ -753,6 +789,34 @@ export class StorageManager {
         const trial1Id = `${subject === 'mathematics' ? 'math' : subject === 'data_structures_algorithms' ? 'dsa' : 'cs'}_hidden_trial_1`;
         return clearedTrials.includes(trial1Id);
       }
+
+      // DSA Hidden Mastery Compression Path (HD1 to HD12)
+      const dsaHdMatch = levelIdentifier.match(/(?:dsa_hidden_hd|hd_dsa_)(\d+)/);
+      if (dsaHdMatch) {
+        if (!profile.dsaHiddenPathDiscovered) return false;
+        const hdNum = parseInt(dsaHdMatch[1], 10);
+        if (hdNum === 1) {
+          return cleared.includes(10) || cleared.length >= 10;
+        }
+        const prevHdId = `dsa_hidden_hd${hdNum - 1}`;
+        const prevHdAlt = `hd_dsa_${String(hdNum - 1).padStart(2, '0')}`;
+        const dsaClearedTrials = profile.dsaHiddenPathClearedLevels || [];
+        return (
+          clearedTrials.includes(prevHdId) ||
+          clearedTrials.includes(prevHdAlt) ||
+          dsaClearedTrials.includes(100 + hdNum - 1)
+        );
+      }
+    }
+
+    // DSA numeric hidden trials (levels 101 to 112)
+    if (subject === 'data_structures_algorithms' && typeof levelIdentifier === 'number' && levelIdentifier >= 101 && levelIdentifier <= 112) {
+      if (!profile.dsaHiddenPathDiscovered) return false;
+      if (levelIdentifier === 101) {
+        return cleared.includes(10) || cleared.length >= 10;
+      }
+      const dsaClearedTrials = profile.dsaHiddenPathClearedLevels || [];
+      return dsaClearedTrials.includes(levelIdentifier - 1) || clearedTrials.includes(`dsa_hidden_hd${levelIdentifier - 100 - 1}`);
     }
 
     // Numeric identifier checks
@@ -763,13 +827,13 @@ export class StorageManager {
     if (levelIdentifier === 5) {
       return cleared.includes(4) || MasteryCompressionEngine.canAccessFinalBoss(subject, profile).allowed;
     }
-    // Hidden Trial 1 (level 101) requires Main Stage 1
+    // Hidden Trial 1 (level 101) requires Main Stage 1 for non-DSA subjects
     if (levelIdentifier === 101) {
       return cleared.includes(1);
     }
     // Hidden Trial 2 (level 102) requires Hidden Trial 1
     if (levelIdentifier === 102) {
-      const trial1Id = `${subject === 'mathematics' ? 'math' : subject === 'data_structures_algorithms' ? 'dsa' : 'cs'}_hidden_trial_1`;
+      const trial1Id = `${subject === 'mathematics' ? 'math' : 'cs'}_hidden_trial_1`;
       return clearedTrials.includes(trial1Id);
     }
 
@@ -778,6 +842,92 @@ export class StorageManager {
       return cleared.includes(levelIdentifier - 1);
     }
     return false;
+  }
+
+  public static isDSAHiddenPathDiscovered(profile?: PlayerProfile): boolean {
+    const prof = profile || this.loadProfile();
+    return !!prof.dsaHiddenPathDiscovered;
+  }
+
+  public static unlockDSAHiddenPath(profile?: PlayerProfile): { unlocked: boolean; reason: string; profile: PlayerProfile } {
+    let prof = profile ? { ...profile } : this.loadProfile();
+    if (prof.dsaHiddenPathDiscovered) {
+      return { unlocked: true, reason: 'Crucible of DSA is already accessible.', profile: prof };
+    }
+
+    // Anti-exploit gate: rapid pattern exploiters cannot discover the hidden path
+    const liveMetrics = telemetry.getLiveMetrics();
+    if (
+      liveMetrics.isRapidExploit ||
+      prof.behaviorClassification === 'RAPID_PATTERN_EXPLOIT' ||
+      (prof.exploitStreakCount && prof.exploitStreakCount >= 2)
+    ) {
+      return {
+        unlocked: false,
+        reason: 'The Crucible shifts out of phase. Rapid pattern exploits disrupt the resonance frequency.',
+        profile: prof,
+      };
+    }
+
+    // Gated requirement: Player must have cleared at least Module 1 (Level 10) of DSA
+    const cleared = prof.clearedLevels['data_structures_algorithms'] || [];
+    const hasFoundation = cleared.includes(10) || cleared.length >= 10;
+    if (!hasFoundation) {
+      return {
+        unlocked: false,
+        reason: 'Mastery of foundational Module 1 algorithmic proofs required before Crucible synthesis opens.',
+        profile: prof,
+      };
+    }
+
+    prof.dsaHiddenPathDiscovered = true;
+    this.saveProfile(prof);
+    return {
+      unlocked: true,
+      reason: 'Crucible of Compression unlocked! The 12 Dense Synthesis Trials are now accessible.',
+      profile: prof,
+    };
+  }
+
+  public static recordDSAHiddenTrialVictory(
+    levelNumber: number,
+    trialId: string,
+    isBoss: boolean = false
+  ): PlayerProfile {
+    let profile = this.loadProfile();
+    if (!profile.dsaHiddenPathClearedLevels) profile.dsaHiddenPathClearedLevels = [];
+    if (!profile.dsaHiddenPathClearedLevels.includes(levelNumber)) {
+      profile.dsaHiddenPathClearedLevels.push(levelNumber);
+      profile.dsaHiddenPathClearedLevels.sort((a, b) => a - b);
+    }
+    if (isBoss || levelNumber === 112 || trialId === 'hd_dsa_12' || trialId === 'dsa_hidden_hd12') {
+      profile.dsaHiddenPathBossDefeated = true;
+      if (!profile.prestigeTitles) profile.prestigeTitles = [];
+      if (!profile.prestigeTitles.includes('Ascendant of Algorithms')) {
+        profile.prestigeTitles.push('Ascendant of Algorithms');
+      }
+    }
+    if (!profile.clearedHiddenTrials) {
+      profile.clearedHiddenTrials = {
+        mathematics: [],
+        computerScience: [],
+        data_structures_algorithms: [],
+        physics: [],
+        chemistry: [],
+        biology: [],
+        history: [],
+        geography: [],
+        language: [],
+      };
+    }
+    if (!profile.clearedHiddenTrials.data_structures_algorithms) {
+      profile.clearedHiddenTrials.data_structures_algorithms = [];
+    }
+    if (!profile.clearedHiddenTrials.data_structures_algorithms.includes(trialId)) {
+      profile.clearedHiddenTrials.data_structures_algorithms.push(trialId);
+    }
+    this.saveProfile(profile);
+    return profile;
   }
 
   public static loadSettings(): GameSettings {

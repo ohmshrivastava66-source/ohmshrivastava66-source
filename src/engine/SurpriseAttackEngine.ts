@@ -38,16 +38,26 @@ export class SurpriseAttackEngine {
         const avgTurns =
           victoryRuns.reduce((acc, r) => acc + (r.turnsUsed || 4), 0) / victoryRuns.length;
 
-        if (avgTime < 25 && avgTurns <= 3) {
+        if (avgTime < 15 && avgTurns <= 3) {
           fastProgressionScore = 30;
+        } else if (avgTime < 25 && avgTurns <= 3) {
+          fastProgressionScore = 25;
         } else if (avgTime < 35 && avgTurns <= 3.5) {
-          fastProgressionScore = 20;
+          fastProgressionScore = 18;
         } else if (avgTime < 45) {
           fastProgressionScore = 10;
         } else {
           fastProgressionScore = 5;
         }
       }
+    }
+
+    // Anti-exploit response: rapid pattern exploiters trigger maximum velocity threat pressure
+    if (
+      profile.behaviorClassification === 'RAPID_PATTERN_EXPLOIT' ||
+      (profile.exploitStreakCount && profile.exploitStreakCount > 0)
+    ) {
+      fastProgressionScore = 30;
     }
 
     // 2. Consecutive Success Score (0 to 25)
@@ -108,12 +118,21 @@ export class SurpriseAttackEngine {
     const maxCleared = cleared.length > 0 ? Math.max(...cleared) : 0;
     const clearedTrials = profile.clearedHiddenTrials?.[subject] || [];
 
-    // Condition: Player has cleared level 3, level 4, or hidden trial 1
-    const nearBoss = maxCleared >= 3 || clearedTrials.length >= 1;
+    // Check proximity to bosses:
+    // For DSA (54 levels): bosses at 10, 24, 34, 43, 50, 54
+    // For Secondary Realms: boss at 3 or 5
+    const dsaBossLevels = [10, 24, 34, 43, 50, 54];
+    const isNearDSABoss = subject === 'data_structures_algorithms' &&
+      dsaBossLevels.some(b => maxCleared === b - 1 || maxCleared === b - 2 || maxCleared === b);
+
+    const nearBoss = subject === 'data_structures_algorithms'
+      ? (isNearDSABoss || clearedTrials.length >= 1 || (profile.dsaHiddenPathClearedLevels && profile.dsaHiddenPathClearedLevels.length >= 1))
+      : (maxCleared >= 3 || clearedTrials.length >= 1);
+
     if (nearBoss && fastProgressionScore >= 10) {
-      if (maxCleared >= 4 || clearedTrials.length >= 2) {
+      if (maxCleared >= 4 || clearedTrials.length >= 2 || (profile.dsaHiddenPathClearedLevels && profile.dsaHiddenPathClearedLevels.length >= 2)) {
         bossProximityScore = 25;
-      } else if (maxCleared >= 3 || clearedTrials.length >= 1) {
+      } else {
         bossProximityScore = 18;
       }
     } else if (nearBoss && fastProgressionScore < 10) {
@@ -217,6 +236,41 @@ export class SurpriseAttackEngine {
   public getSurpriseAttack(subject: SubjectId, _profile: PlayerProfile): SurpriseAttackDefinition {
     const attack = SURPRISE_ATTACKS_MAP[subject] || SURPRISE_ATTACKS_MAP.mathematics;
     return attack;
+  }
+
+  /**
+   * Evaluates surprise attack triggers returning detailed diagnostic object.
+   */
+  public evaluateTrigger(
+    profile: PlayerProfile,
+    subject: SubjectId,
+    _levelNumber: number,
+    isJudgeDemo: boolean
+  ): {
+    shouldTrigger: boolean;
+    threatScore: number;
+    triggerReason: string;
+  } {
+    if (isJudgeDemo) {
+      return {
+        shouldTrigger: false,
+        threatScore: 0,
+        triggerReason: 'Judge Demo Immunity',
+      };
+    }
+    const threat = this.calculateThreatLevel(subject, profile);
+    const should = this.shouldTriggerAttack(subject, isJudgeDemo, profile);
+    let reason = 'Normal Pacing';
+    if (threat.fastProgressionScore >= 25) {
+      reason = 'High Velocity Progression';
+    } else if (threat.threatLevel >= 50) {
+      reason = 'Elevated Threat Profile';
+    }
+    return {
+      shouldTrigger: should,
+      threatScore: threat.threatLevel,
+      triggerReason: reason,
+    };
   }
 }
 
