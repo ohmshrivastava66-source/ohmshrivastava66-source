@@ -122,7 +122,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'The variant function V = high - low + 1 strictly decreases by at least 1 on every step. Since V is bounded below by 0, the principle of well-ordering guarantees termination.',
-    echoVaultId: 'vault_recursion',
+    echoVaultId: 'vault_cs_invariants',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Turing Archon',
   },
@@ -170,7 +170,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'Conjugate observables obey the Fourier transform bound. Precise localization in momentum space spreads the position wave packet over all space.',
-    echoVaultId: 'vault_factorization',
+    echoVaultId: 'vault_physics_dynamics',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Quantum Sovereign',
   },
@@ -217,7 +217,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'A catalyst provides an alternative transition state with lower activation energy, accelerating approach to equilibrium without shifting the thermodynamic position (ΔG° and K_eq remain constant).',
-    echoVaultId: 'vault_factorization',
+    echoVaultId: 'vault_chemistry_stoichiometry',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Valence Monarch',
   },
@@ -263,7 +263,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'CpG island methylation in promoters recruits chromatin remodeling complexes that condense DNA, sterically blocking transcription factor access and silencing expression.',
-    echoVaultId: 'vault_factorization',
+    echoVaultId: 'vault_biology_transcription',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Genetic Primordial',
   },
@@ -309,7 +309,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'Weimar hyperinflation was catalyzed by the French-Belgian occupation of the Ruhr and massive structural debt obligations, prompting the state to monetize deficit spending to support passive resistance.',
-    echoVaultId: 'vault_factorization',
+    echoVaultId: 'vault_history_sources',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Chronos Emperor',
   },
@@ -355,7 +355,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'Inward pressure gradient force combined with rightward Coriolis deflection in the Northern Hemisphere creates a cyclostrophic balance with counterclockwise rotation.',
-    echoVaultId: 'vault_factorization',
+    echoVaultId: 'vault_geography_coordinates',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Tectonic Leviathan',
   },
@@ -401,7 +401,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'High attachment links the PP to VP [saw [the student] [with the telescope]] (using the telescope to see), while low attachment links to NP [the student [with the telescope]] (the student holding the telescope).',
-    echoVaultId: 'vault_factorization',
+    echoVaultId: 'vault_language_syntax',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Semantic Overlord',
   },
@@ -459,7 +459,7 @@ export const MIRROR_BOSS_DEFINITIONS: Record<SubjectId, MirrorBossDefinition> = 
     ],
     correctExplanation:
       'Using the accounting/aggregate method, each inserted element pays 3 tokens: 1 for its own insertion, 1 for its future copy, and 1 to copy an older element. The aggregate cost is O(N), giving amortized O(1).',
-    echoVaultId: 'dsa_echo_vault',
+    echoVaultId: 'vault_dsa_asymptotics',
     rewardXp: 150,
     mirrorMark: 'Mirror Mark of the Asymptotic Sovereign',
   },

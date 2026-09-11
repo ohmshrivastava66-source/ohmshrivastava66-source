@@ -1,5 +1,6 @@
 import { EncounterDefinition } from '../types/curriculum';
 import { ActionTelemetryItem, DiagnosisResult } from '../types/telemetry';
+import { getDefaultEchoVaultForSubject, ECHO_VAULTS_MAP } from '../curriculum/registry';
 
 export class DiagnosticEngine {
   public static diagnoseAction(
@@ -8,12 +9,20 @@ export class DiagnosticEngine {
     playedOperation: string,
     actionItem: ActionTelemetryItem
   ): DiagnosisResult {
+    const defaultVault = getDefaultEchoVaultForSubject(encounter.subject, encounter.levelNumber);
+
     // 1. Check if encounter has an explicit misconception rule for this exact trigger
     const matchedRule = encounter.misconceptions.find(
       m => m.atStepIndex === currentStepIndex && m.triggerOperation === playedOperation
     );
 
     if (matchedRule) {
+      // Validate that matchedRule.echoVaultId belongs to encounter.subject
+      const candidate = matchedRule.echoVaultId ? ECHO_VAULTS_MAP[matchedRule.echoVaultId] : undefined;
+      const validatedEchoVaultId = (candidate && candidate.subject === encounter.subject)
+        ? matchedRule.echoVaultId
+        : defaultVault.id;
+
       return {
         diagnosisType: matchedRule.diagnosisType,
         mistakeStep: currentStepIndex + 1,
@@ -23,7 +32,7 @@ export class DiagnosticEngine {
         confidence: 0.94,
         explanation: matchedRule.diagnosisExplanation,
         recommendedRepair: matchedRule.repairConcept,
-        echoVaultId: matchedRule.echoVaultId,
+        echoVaultId: validatedEchoVaultId,
         adaptation: {
           name: matchedRule.enemyAdaptationName,
           description: matchedRule.enemyAdaptationEffect,
@@ -34,7 +43,6 @@ export class DiagnosticEngine {
     }
 
     // 2. Dynamic heuristic classification
-    const expectedOp = encounter.optimalSequence[currentStepIndex] || 'COMPLETE';
     const laterInSequence = encounter.optimalSequence.slice(currentStepIndex + 1).includes(playedOperation);
 
     if ((actionItem.timeSinceLastActionMs ?? 0) < 1200) {
@@ -47,6 +55,7 @@ export class DiagnosticEngine {
         confidence: 0.88,
         explanation: 'The action was triggered almost instantly without inspecting problem invariants.',
         recommendedRepair: 'Deliberate Sequence Analysis',
+        echoVaultId: defaultVault.id,
         adaptation: {
           name: 'Deliberation Ward',
           description: 'The enemy disrupts rapid guessing. Next card costs +1 Energy unless deliberated.',
@@ -65,6 +74,7 @@ export class DiagnosticEngine {
         confidence: 0.92,
         explanation: `While ${playedOperation} is a valid tool for this subject, it cannot succeed until prerequisite transformations have simplified the state.`,
         recommendedRepair: `Prerequisite Ordering for ${encounter.conceptName}`,
+        echoVaultId: defaultVault.id,
         adaptation: {
           name: 'Prerequisite Lock',
           description: `The enemy locks ${playedOperation} behind a foundation shield until prerequisite steps are resolved.`,
@@ -80,8 +90,9 @@ export class DiagnosticEngine {
       observedPattern: `Incompatible operation ${playedOperation} applied to state: "${encounter.initialEquationOrState}"`,
       expectedPattern: 'Canonical state transformation needed',
       confidence: 0.91,
-      explanation: 'The applied operation does not advance the state toward canonical resolution. Review the required algebraic transformation.',
+      explanation: `The applied operation does not advance the state toward canonical resolution. Review the required transformations for ${encounter.conceptName}.`,
       recommendedRepair: `Fundamental Rules of ${encounter.conceptName}`,
+      echoVaultId: defaultVault.id,
       adaptation: {
         name: 'Axiom Counter-Shield',
         description: 'The enemy gains 20 Shield from the misapplied operation.',

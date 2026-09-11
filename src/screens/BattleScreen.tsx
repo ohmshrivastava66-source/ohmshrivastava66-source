@@ -26,7 +26,8 @@ interface BattleScreenProps {
     encounter: EncounterDefinition,
     weaknessName?: string,
     failedStepIndex?: number,
-    lastAttemptedOp?: string
+    lastAttemptedOp?: string,
+    echoVaultId?: string
   ) => void;
   onEnterEchoVault: (vaultId: string) => void;
 }
@@ -106,7 +107,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           encounter,
           gameState.activeDiagnosis?.concept || 'Procedural Error',
           gameState.currentStepIndex,
-          gameState.lastCardPlayed?.operationKey
+          gameState.lastCardPlayed?.operationKey,
+          gameState.echoVaultId
         );
       }, 1000);
       return () => clearTimeout(timer);

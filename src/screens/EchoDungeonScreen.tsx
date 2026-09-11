@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { EchoDungeonDefinition } from '../types/curriculum';
+import { SubjectId } from '../types/game';
 import { ParticleCanvas } from '../components/ParticleCanvas';
 import { StorageManager } from '../persistence/StorageManager';
 import { Sparkles, CheckCircle2, XCircle, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
@@ -8,15 +9,24 @@ import confetti from 'canvas-confetti';
 
 interface EchoDungeonScreenProps {
   vault: EchoDungeonDefinition;
+  sourceSubject?: SubjectId;
   onCompleteRepair: () => void;
   onExitWithoutRepair: () => void;
 }
 
 export const EchoDungeonScreen: React.FC<EchoDungeonScreenProps> = ({
   vault,
+  sourceSubject,
   onCompleteRepair,
   onExitWithoutRepair,
 }) => {
+  // Strict Cross-realm Invariant Enforcement (fail loudly in dev / test mode)
+  if (sourceSubject && vault.subject !== sourceSubject) {
+    const errorMsg = `[CRITICAL INVARIANT VIOLATION] Echo Dungeon realm contamination detected! Source Subject: "${sourceSubject}", Vault Subject: "${vault.subject}".`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);

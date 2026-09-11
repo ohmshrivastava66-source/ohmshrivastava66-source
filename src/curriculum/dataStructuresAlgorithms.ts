@@ -4016,7 +4016,7 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         enemyAdaptationName: 'Topological Shroud',
         enemyAdaptationEffect: 'The Entropy Partitioner fractures the spanning cut.',
         repairConcept: 'Partition cut (S, V - S) and select light edge first.',
-        echoVaultId: 'vault_dsa_spanning',
+        echoVaultId: 'vault_dsa_strategy',
       },
       {
         triggerOperation: 'VERIFY_INVARIANT',
@@ -4027,7 +4027,7 @@ export const DSA_ENCOUNTERS: EncounterDefinition[] = [
         enemyAdaptationName: 'Cut Disruption',
         enemyAdaptationEffect: 'The Partitioner repels ungrounded invariant assertions.',
         repairConcept: 'Resolve cycle contradiction via disjoint union before final verification.',
-        echoVaultId: 'vault_dsa_spanning',
+        echoVaultId: 'vault_dsa_strategy',
       },
     ],
     enemy: {

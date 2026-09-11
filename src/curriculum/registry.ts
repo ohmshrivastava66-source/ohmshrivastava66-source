@@ -489,16 +489,371 @@ export const ENCOUNTERS_MAP: Record<SubjectId, EncounterDefinition[]> = {
   ],
 };
 
+/* SECONDARY REALM ECHO VAULTS */
+export const PHYSICS_ECHO_VAULT: EchoDungeonDefinition = {
+  id: 'vault_physics_dynamics',
+  subject: 'physics',
+  title: 'The Kinematics Chamber',
+  weaknessLabel: 'Newtonian Force Isolation & Acceleration',
+  misconceptionType: 'formula_misapplication',
+  problemContext: 'Applying F = ma when net force F = 20 N acts on mass m = 5 kg:',
+  breakdownExplanation:
+    "Newton's second law states F_net = m * a. To find acceleration, isolate a = F_net / m. Substituting 20 N / 5 kg yields 4 m/s².",
+  coreRule: 'Isolate the target unknown algebraically before substituting scalar magnitudes.',
+  steps: [
+    {
+      stepNumber: 1,
+      instruction: 'From the relation F = m * a, isolate acceleration a:',
+      options: [
+        {
+          label: 'a = F / m',
+          operationKey: 'ISOLATE_VARIABLE',
+          isCorrect: true,
+          feedback: 'Correct! Dividing both sides by mass m isolates acceleration.',
+        },
+        {
+          label: 'a = F * m',
+          operationKey: 'COMPUTE',
+          isCorrect: false,
+          feedback: 'Incorrect: Multiplying force by mass does not isolate acceleration.',
+        },
+      ],
+    },
+    {
+      stepNumber: 2,
+      instruction: 'Substitute F = 20 N and m = 5 kg to calculate a:',
+      options: [
+        {
+          label: 'a = 20 / 5 = 4 m/s²',
+          operationKey: 'COMPUTE',
+          isCorrect: true,
+          feedback: 'Correct! 20 / 5 = 4 m/s².',
+        },
+        {
+          label: 'a = 20 * 5 = 100 m/s²',
+          operationKey: 'APPLY_NEWTON',
+          isCorrect: false,
+          feedback: 'Incorrect: You multiplied instead of dividing.',
+        },
+      ],
+    },
+  ],
+  rewardMastery: 25,
+};
+
+export const CHEMISTRY_ECHO_VAULT: EchoDungeonDefinition = {
+  id: 'vault_chemistry_stoichiometry',
+  subject: 'chemistry',
+  title: 'The Stoichiometric Crucible',
+  weaknessLabel: 'Molar Stoichiometry & Atom Balancing',
+  misconceptionType: 'stoichiometric_error',
+  problemContext: 'Balancing the synthesis reaction: _H₂ + _O₂ -> _H₂O:',
+  breakdownExplanation:
+    'Conserve atoms on both sides of the reaction: 2H₂ + O₂ -> 2H₂O yields 4 hydrogen atoms and 2 oxygen atoms in both reactants and products.',
+  coreRule: 'Chemical equations balance through stoichiometric coefficients without altering chemical subscripts.',
+  steps: [
+    {
+      stepNumber: 1,
+      instruction: 'Determine the correct stoichiometric coefficients for H₂ + O₂ -> H₂O:',
+      options: [
+        {
+          label: '2H₂ + O₂ -> 2H₂O',
+          operationKey: 'BALANCE_EQUATION',
+          isCorrect: true,
+          feedback: 'Correct! 4 H and 2 O on both sides preserves atomic conservation.',
+        },
+        {
+          label: 'H₂ + O₂ -> H₂O₂',
+          operationKey: 'STOICHIOMETRY',
+          isCorrect: false,
+          feedback: 'Incorrect: H₂O₂ is hydrogen peroxide, a completely different compound.',
+        },
+      ],
+    },
+    {
+      stepNumber: 2,
+      instruction: 'Identify the mole ratio between H₂ and H₂O produced:',
+      options: [
+        {
+          label: '2 mol H₂ consumed produces 2 mol H₂O (1:1 ratio)',
+          operationKey: 'STOICHIOMETRY',
+          isCorrect: true,
+          feedback: 'Correct! The stoichiometric ratio is 2:2, or 1:1.',
+        },
+        {
+          label: '1 mol H₂ produces 2 mol H₂O',
+          operationKey: 'VERIFY',
+          isCorrect: false,
+          feedback: 'Incorrect: Conserving hydrogen requires 2 moles of H₂ for 2 moles of H₂O.',
+        },
+      ],
+    },
+  ],
+  rewardMastery: 25,
+};
+
+export const BIOLOGY_ECHO_VAULT: EchoDungeonDefinition = {
+  id: 'vault_biology_transcription',
+  subject: 'biology',
+  title: 'The Nucleotide Sanctum',
+  weaknessLabel: 'DNA-RNA Base Pairing Inversion',
+  misconceptionType: 'conceptual_misconception',
+  problemContext: "Transcribing template DNA strand 3'-TAC-5' into messenger RNA:",
+  breakdownExplanation:
+    "During transcription, RNA polymerase pairs Uracil (U) with Adenine (A), Adenine (A) with Thymine (T), and Guanine (G) with Cytosine (C). TAC becomes 5'-AUG-3'.",
+  coreRule: 'RNA pairs Uracil (U) across from DNA Adenine (A); RNA never contains Thymine (T).',
+  steps: [
+    {
+      stepNumber: 1,
+      instruction: 'Which base in mRNA complements Adenine (A) in the template DNA strand?',
+      options: [
+        {
+          label: 'Uracil (U)',
+          operationKey: 'TRANSCRIBE',
+          isCorrect: true,
+          feedback: 'Correct! In RNA synthesis, Uracil replaces Thymine as the complement to Adenine.',
+        },
+        {
+          label: 'Thymine (T)',
+          operationKey: 'TRANSLATE',
+          isCorrect: false,
+          feedback: 'Incorrect: Thymine is present in DNA, but mRNA uses Uracil.',
+        },
+      ],
+    },
+    {
+      stepNumber: 2,
+      instruction: "Transcribe the template DNA triplet 3'-TAC-5' to its complementary mRNA codon:",
+      options: [
+        {
+          label: "5'-AUG-3' (Start Codon Methionine)",
+          operationKey: 'TRANSLATE',
+          isCorrect: true,
+          feedback: 'Correct! T->A, A->U, C->G yields the canonical start codon AUG.',
+        },
+        {
+          label: "5'-ATG-3'",
+          operationKey: 'VERIFY',
+          isCorrect: false,
+          feedback: 'Incorrect: ATG is a DNA sequence, not an RNA codon.',
+        },
+      ],
+    },
+  ],
+  rewardMastery: 25,
+};
+
+export const HISTORY_ECHO_VAULT: EchoDungeonDefinition = {
+  id: 'vault_history_sources',
+  subject: 'history',
+  title: 'The Chronos Archive',
+  weaknessLabel: 'Primary vs Secondary Source Distinction',
+  misconceptionType: 'source_evaluation_error',
+  problemContext: 'Evaluating historiographical evidence for ancient trade and economic exchange:',
+  breakdownExplanation:
+    'Primary sources originate contemporaneously from participants or observers of the era. Secondary sources are retrospective scholarly evaluations written after the fact.',
+  coreRule: 'Primary sources provide direct, firsthand historical traces; secondary sources interpret and synthesize primary data.',
+  steps: [
+    {
+      stepNumber: 1,
+      instruction: 'Which of the following is a primary source for ancient Mediterranean trade?',
+      options: [
+        {
+          label: 'A contemporaneous merchant papyrus ledger found in an Egyptian port',
+          operationKey: 'ANCHOR_ERA',
+          isCorrect: true,
+          feedback: 'Correct! The papyrus ledger was created during the time period under investigation.',
+        },
+        {
+          label: 'A 20th-century peer-reviewed academic article analyzing trade routes',
+          operationKey: 'PROVE_CAUSATION',
+          isCorrect: false,
+          feedback: 'Incorrect: A modern academic article is a secondary source.',
+        },
+      ],
+    },
+    {
+      stepNumber: 2,
+      instruction: 'How should conflicting testimonies in primary accounts be reconciled?',
+      options: [
+        {
+          label: 'Cross-examine independent archaeological strata and corroborating chronicles',
+          operationKey: 'VERIFY',
+          isCorrect: true,
+          feedback: 'Correct! Cross-referencing independent sources and physical evidence resolves bias.',
+        },
+        {
+          label: 'Discard both accounts immediately as untrustworthy',
+          operationKey: 'SYNTHESIZE',
+          isCorrect: false,
+          feedback: 'Incorrect: Historiographical method evaluates relative bias rather than outright dismissal.',
+        },
+      ],
+    },
+  ],
+  rewardMastery: 25,
+};
+
+export const GEOGRAPHY_ECHO_VAULT: EchoDungeonDefinition = {
+  id: 'vault_geography_coordinates',
+  subject: 'geography',
+  title: 'The Cartographic Meridian',
+  weaknessLabel: 'Latitude and Longitude Coordinate Transposition',
+  misconceptionType: 'spatial_misorientation',
+  problemContext: 'Establishing spatial references across the geographic coordinate grid:',
+  breakdownExplanation:
+    'Latitude parallels measure angular degrees North and South of the Equator (0°). Longitude meridians measure angular degrees East and West of the Prime Meridian (0°).',
+  coreRule: 'Latitude lines run horizontally parallel (N/S); Longitude lines run vertically from pole to pole (E/W).',
+  steps: [
+    {
+      stepNumber: 1,
+      instruction: 'Which reference baseline serves as the zero-degree origin for Latitude?',
+      options: [
+        {
+          label: 'The Equator (0° Latitude)',
+          operationKey: 'MAP_TERRAIN',
+          isCorrect: true,
+          feedback: 'Correct! The Equator divides the Earth into Northern and Southern hemispheres.',
+        },
+        {
+          label: 'The Prime Meridian (Greenwich)',
+          operationKey: 'TRACE_WATERSHED',
+          isCorrect: false,
+          feedback: 'Incorrect: The Prime Meridian is the zero-degree origin for Longitude, not Latitude.',
+        },
+      ],
+    },
+    {
+      stepNumber: 2,
+      instruction: "How do lines of longitude behave near the Earth's poles?",
+      options: [
+        {
+          label: 'They converge at the geographic North and South poles',
+          operationKey: 'VERIFY',
+          isCorrect: true,
+          feedback: 'Correct! Meridians of longitude converge at the poles and are widest apart at the equator.',
+        },
+        {
+          label: 'They remain strictly parallel equidistant lines',
+          operationKey: 'MAP_CONTOURS',
+          isCorrect: false,
+          feedback: 'Incorrect: Parallels of latitude stay equidistant, whereas meridians converge.',
+        },
+      ],
+    },
+  ],
+  rewardMastery: 25,
+};
+
+export const LANGUAGE_ECHO_VAULT: EchoDungeonDefinition = {
+  id: 'vault_language_syntax',
+  subject: 'language',
+  title: 'The Syntax Spire',
+  weaknessLabel: 'Subject-Predicate Constituent Parsing',
+  misconceptionType: 'syntactic_misalignment',
+  problemContext: 'Deconstructing the sentence: "The ancient scholar deciphered the rune":',
+  breakdownExplanation:
+    'Every declarative clause divides into a Subject Noun Phrase ("The ancient scholar") which performs the action and a Predicate Verb Phrase ("deciphered the rune") which contains the verbal head and complements.',
+  coreRule: 'A grammatical sentence S decomposes into NP (subject) and VP (predicate).',
+  steps: [
+    {
+      stepNumber: 1,
+      instruction: 'Isolate the complete Subject Noun Phrase (NP) in "The ancient scholar deciphered the rune":',
+      options: [
+        {
+          label: 'Subject NP: "The ancient scholar"',
+          operationKey: 'SYNTAX_PARSE',
+          isCorrect: true,
+          feedback: 'Correct! "The ancient scholar" forms the complete subject noun phrase.',
+        },
+        {
+          label: '"deciphered the rune"',
+          operationKey: 'DECODE_ETYMOLOGY',
+          isCorrect: false,
+          feedback: 'Incorrect: "deciphered the rune" is the Predicate Verb Phrase.',
+        },
+      ],
+    },
+    {
+      stepNumber: 2,
+      instruction: 'Identify the transitive head verb and its direct object argument in the VP:',
+      options: [
+        {
+          label: 'Head Verb: "deciphered" | Direct Object: "the rune"',
+          operationKey: 'DECODE_ETYMOLOGY',
+          isCorrect: true,
+          feedback: 'Correct! "deciphered" is the transitive verb taking "the rune" as its direct object.',
+        },
+        {
+          label: 'Head Verb: "ancient" | Direct Object: "scholar"',
+          operationKey: 'VERIFY',
+          isCorrect: false,
+          feedback: 'Incorrect: "ancient" is an adjective modifying the noun "scholar".',
+        },
+      ],
+    },
+  ],
+  rewardMastery: 25,
+};
+
 /* MASTER ECHO VAULTS MAP */
 export const ECHO_VAULTS_MAP: Record<string, EchoDungeonDefinition> = {
+  // Mathematics
   vault_factorization: MATH_ECHO_VAULT,
+
+  // Computer Science
   vault_cs_invariants: CS_ECHO_VAULT,
+
+  // Data Structures & Algorithms
   vault_dsa_asymptotics: DSA_ECHO_VAULT,
   vault_dsa_rotations: DSA_ROTATIONS_ECHO_VAULT,
   vault_dsa_strategy: DSA_STRATEGY_ECHO_VAULT,
   vault_dsa_optimization: DSA_OPTIMIZATION_ECHO_VAULT,
   vault_dsa_complexity: DSA_COMPLEXITY_ECHO_VAULT,
+
+  // Secondary Realms
+  vault_physics_dynamics: PHYSICS_ECHO_VAULT,
+  vault_chemistry_stoichiometry: CHEMISTRY_ECHO_VAULT,
+  vault_biology_transcription: BIOLOGY_ECHO_VAULT,
+  vault_history_sources: HISTORY_ECHO_VAULT,
+  vault_geography_coordinates: GEOGRAPHY_ECHO_VAULT,
+  vault_language_syntax: LANGUAGE_ECHO_VAULT,
+
+  // Compatibility & Cross-System Aliases
+  vault_dsa_spanning: DSA_STRATEGY_ECHO_VAULT,
+  dsa_echo_vault: DSA_ECHO_VAULT,
+  vault_recursion: CS_ECHO_VAULT,
+  vault_sorting: CS_ECHO_VAULT,
+  vault_binary_search: CS_ECHO_VAULT,
+  vault_verification: MATH_ECHO_VAULT,
 };
+
+/**
+ * Returns the authoritative default Echo Vault for a subject, with optional modular level selection for DSA.
+ */
+export function getDefaultEchoVaultForSubject(
+  subject: SubjectId,
+  levelNumber?: number
+): EchoDungeonDefinition {
+  if (subject === 'data_structures_algorithms') {
+    if (levelNumber !== undefined) {
+      if (levelNumber <= 10) return ECHO_VAULTS_MAP.vault_dsa_asymptotics;
+      if (levelNumber <= 20) return ECHO_VAULTS_MAP.vault_dsa_rotations;
+      if (levelNumber <= 30) return ECHO_VAULTS_MAP.vault_dsa_strategy;
+      if (levelNumber <= 40) return ECHO_VAULTS_MAP.vault_dsa_optimization;
+      return ECHO_VAULTS_MAP.vault_dsa_complexity;
+    }
+    return ECHO_VAULTS_MAP.vault_dsa_asymptotics;
+  }
+  if (subject === 'computerScience') return ECHO_VAULTS_MAP.vault_cs_invariants;
+  if (subject === 'physics') return ECHO_VAULTS_MAP.vault_physics_dynamics;
+  if (subject === 'chemistry') return ECHO_VAULTS_MAP.vault_chemistry_stoichiometry;
+  if (subject === 'biology') return ECHO_VAULTS_MAP.vault_biology_transcription;
+  if (subject === 'history') return ECHO_VAULTS_MAP.vault_history_sources;
+  if (subject === 'geography') return ECHO_VAULTS_MAP.vault_geography_coordinates;
+  if (subject === 'language') return ECHO_VAULTS_MAP.vault_language_syntax;
+  return ECHO_VAULTS_MAP.vault_factorization;
+}
 
 /* STARTER CARDS MAP */
 export const STARTER_CARDS_MAP: Record<SubjectId, Card[]> = {

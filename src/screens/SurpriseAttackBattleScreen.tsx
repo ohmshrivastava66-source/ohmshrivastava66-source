@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { sounds } from '../audio/SoundEffects';
+import { getDefaultEchoVaultForSubject, ECHO_VAULTS_MAP } from '../curriculum/registry';
 
 interface SurpriseAttackBattleScreenProps {
   attack: SurpriseAttackDefinition;
@@ -42,7 +43,13 @@ export const SurpriseAttackBattleScreen: React.FC<SurpriseAttackBattleScreenProp
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
   const [battleState, setBattleState] = useState<'IN_PROGRESS' | 'VICTORY' | 'DEFEAT'>('IN_PROGRESS');
   const [diagnosedWeakness, setDiagnosedWeakness] = useState<string>('Synthesis Misconception');
-  const [failedVaultId, setFailedVaultId] = useState<string>('vault_factorization');
+  const [failedVaultId, setFailedVaultId] = useState<string>(() => {
+    const candidate = attack.eliteQuestions[0]?.recoveryEchoVaultId;
+    if (candidate && ECHO_VAULTS_MAP[candidate]?.subject === attack.subject) {
+      return candidate;
+    }
+    return getDefaultEchoVaultForSubject(attack.subject).id;
+  });
 
   const question = attack.eliteQuestions[currentQuestionIndex] || attack.eliteQuestions[0];
   const selectedOption = question.options.find(o => o.id === selectedOptionId);
@@ -64,7 +71,11 @@ export const SurpriseAttackBattleScreen: React.FC<SurpriseAttackBattleScreenProp
     } else {
       sounds.playPlayerHurt();
       setDiagnosedWeakness(selectedOption.distractorMisconception || 'Synthesis Error');
-      setFailedVaultId(question.recoveryEchoVaultId);
+      const targetVault = question.recoveryEchoVaultId;
+      const safeTarget = (targetVault && ECHO_VAULTS_MAP[targetVault]?.subject === attack.subject)
+        ? targetVault
+        : getDefaultEchoVaultForSubject(attack.subject).id;
+      setFailedVaultId(safeTarget);
     }
   };
 

@@ -11,6 +11,7 @@ import { QuestionVariant } from '../curriculum/questionPools';
 import { solutionPathEngine, SolutionGraph } from './SolutionPathEngine';
 import { bossAbilityEngine } from './BossAbilityEngine';
 import { learningDNAEngine } from './LearningDNAEngine';
+import { getDefaultEchoVaultForSubject } from '../curriculum/registry';
 
 export interface CombatEngineState {
   player: PlayerState;
@@ -182,6 +183,7 @@ export class CombatEngine {
       activeDiagnosis: null,
       showAdaptationModal: false,
       echoVaultAvailable: false,
+      echoVaultId: getDefaultEchoVaultForSubject(encounter.subject, encounter.levelNumber).id,
       activeDanger,
       hiddenCards: [],
       costModifiers: {},
@@ -404,11 +406,10 @@ export class CombatEngine {
       this.state.enemy.shield += counterShield;
 
       // Unlock Secret Echo Dungeon Vault
-      if (diagnosis.echoVaultId) {
-        this.state.echoVaultAvailable = true;
-        this.state.echoVaultId = diagnosis.echoVaultId;
-        sounds.playPortalOpen();
-      }
+      const resolvedVaultId = diagnosis.echoVaultId || getDefaultEchoVaultForSubject(this.encounter.subject, this.encounter.levelNumber).id;
+      this.state.echoVaultAvailable = true;
+      this.state.echoVaultId = resolvedVaultId;
+      sounds.playPortalOpen();
 
       // Enemy Counter-Strike on mistake (scaled for high-stakes boss and hidden mastery trials)
       const recoilDamage = (this.encounter.pathType === 'hidden_trial' || this.encounter.isBoss) ? 30 : 12;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppScreen, SubjectId, Card } from './types/game';
 import { EncounterDefinition } from './types/curriculum';
 import { PlayerProfile, DangerEventDefinition } from './types/telemetry';
-import { ENCOUNTERS_MAP, ECHO_VAULTS_MAP, getAvailableSubjectsForClass, getClass } from './curriculum/registry';
+import { ENCOUNTERS_MAP, ECHO_VAULTS_MAP, getDefaultEchoVaultForSubject, getAvailableSubjectsForClass, getClass } from './curriculum/registry';
 import { StorageManager } from './persistence/StorageManager';
 import { dangerEngine } from './engine/DangerEngine';
 import { surpriseAttackEngine } from './engine/SurpriseAttackEngine';
@@ -42,7 +42,7 @@ export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('HOME');
   const [activeSubject, setActiveSubject] = useState<SubjectId>('mathematics');
   const [activeLevelNumber, setActiveLevelNumber] = useState<number>(1);
-  const [activeVaultId, setActiveVaultId] = useState<string>('vault_factorization');
+  const [activeVaultId, setActiveVaultId] = useState<string>(() => getDefaultEchoVaultForSubject('mathematics').id);
   const [isJudgeDemo, setIsJudgeDemo] = useState<boolean>(false);
   const [battleSessionId, setBattleSessionId] = useState<number>(0);
   const [activeEncounterInstance, setActiveEncounterInstance] = useState<EncounterDefinition | null>(null);
@@ -99,6 +99,7 @@ export const App: React.FC = () => {
     setActiveDangerEvent(undefined);
     setActiveSurpriseAttack(null);
     setActiveSubject('mathematics');
+    setActiveVaultId('vault_factorization');
     setActiveLevelNumber(1);
     const baseMath = ENCOUNTERS_MAP.mathematics[0];
     const demoEncounter = questionSelectionEngine.getEncounterWithSelectedQuestion(baseMath, {
@@ -111,6 +112,8 @@ export const App: React.FC = () => {
   // Handlers for Screen Transitions
   const handleSelectSubject = (subj: SubjectId) => {
     setActiveSubject(subj);
+    setActiveVaultId(getDefaultEchoVaultForSubject(subj).id);
+    setIsJudgeDemo(false);
     setActiveEncounterInstance(null);
     setCurrentScreen('WORLD_MAP');
   };
@@ -195,7 +198,11 @@ export const App: React.FC = () => {
   };
 
   const handleEnterEchoVault = (vaultId: string) => {
-    setActiveVaultId(vaultId);
+    const candidate = ECHO_VAULTS_MAP[vaultId];
+    const resolvedVaultId = (candidate && candidate.subject === activeSubject)
+      ? vaultId
+      : getDefaultEchoVaultForSubject(activeSubject, activeLevelNumber).id;
+    setActiveVaultId(resolvedVaultId);
     setCurrentScreen('ECHO_DUNGEON');
   };
 
@@ -296,12 +303,20 @@ export const App: React.FC = () => {
     encounter: EncounterDefinition,
     weaknessName?: string,
     failedStepIndex?: number,
-    lastAttemptedOp?: string
+    lastAttemptedOp?: string,
+    echoVaultId?: string
   ) => {
     const weakness = weaknessName || 'Procedural Misalignment';
     setLastDefeatWeakness(weakness);
     setLastDefeatStepIndex(failedStepIndex ?? 0);
     setLastDefeatAttemptedOp(lastAttemptedOp ?? '');
+
+    // Resolve authoritative Echo Vault for this specific encounter & subject
+    const candidate = echoVaultId ? ECHO_VAULTS_MAP[echoVaultId] : undefined;
+    const resolvedVaultId = (candidate && candidate.subject === encounter.subject)
+      ? echoVaultId!
+      : getDefaultEchoVaultForSubject(encounter.subject, encounter.levelNumber).id;
+    setActiveVaultId(resolvedVaultId);
 
     // Record defeat in telemetry logs
     const updatedProfile = StorageManager.recordDefeatOrRevision(
@@ -469,13 +484,26 @@ export const App: React.FC = () => {
           />
         )}
 
-        {currentScreen === 'ECHO_DUNGEON' && (
-          <EchoDungeonScreen
-            vault={ECHO_VAULTS_MAP[activeVaultId] || ECHO_VAULTS_MAP.vault_factorization}
-            onCompleteRepair={handleEchoVaultRepaired}
-            onExitWithoutRepair={() => setCurrentScreen('BATTLE')}
-          />
-        )}
+        {currentScreen === 'ECHO_DUNGEON' && (() => {
+          const candidateVault = ECHO_VAULTS_MAP[activeVaultId];
+          const safeVault = (candidateVault && candidateVault.subject === activeSubject)
+            ? candidateVault
+            : getDefaultEchoVaultForSubject(activeSubject, activeLevelNumber);
+
+          // Explicit invariant assertion (fails loudly in dev/test mode)
+          if (safeVault.subject !== activeSubject) {
+            throw new Error(`[CRITICAL INVARIANT VIOLATION] Echo vault subject (${safeVault.subject}) does not match active encounter subject (${activeSubject})!`);
+          }
+
+          return (
+            <EchoDungeonScreen
+              vault={safeVault}
+              sourceSubject={activeSubject}
+              onCompleteRepair={handleEchoVaultRepaired}
+              onExitWithoutRepair={() => setCurrentScreen('BATTLE')}
+            />
+          );
+        })()}
 
         {currentScreen === 'VICTORY' && lastVictoryEncounter && (
           <VictoryScreen
